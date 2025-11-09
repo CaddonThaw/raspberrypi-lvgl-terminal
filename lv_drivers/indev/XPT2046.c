@@ -66,18 +66,14 @@ static uint8_t xpt2046_transferByte(uint8_t byte)
     
     for(int i = 0; i < 8; i++) 
     {
-        // 设置MOSI
         digitalWrite(MOSI_PIN, (byte & 0x80) ? 1 : 0);
         delayMicroseconds(5);
         
-        // 上升沿锁存
         digitalWrite(SCLK_PIN, 1);
         delayMicroseconds(5);
         
-        // 读取MISO
         received = (received << 1) | digitalRead(MISO_PIN);
         
-        // 下降沿切换
         digitalWrite(SCLK_PIN, 0);
         delayMicroseconds(5);
         

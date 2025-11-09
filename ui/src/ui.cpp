@@ -86,7 +86,7 @@ void ui_event_ToOpenCVButton(lv_event_t * e)
         _ui_screen_change(&ui_OpenCV, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_OpenCV_screen_init);
         _ui_screen_delete(&ui_Main);
         
-        // 创建OpenCV线程
+        // Creat OpenCV thread
         cv_create_thread();
     }
 }
@@ -99,7 +99,7 @@ void ui_event_OpenCVToMainButton(lv_event_t * e)
         _ui_screen_change(&ui_Main, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Main_screen_init);
         _ui_screen_delete(&ui_OpenCV);
         
-        // 终止OpenCV线程
+        // Terminate OpenCV thread
         cv_destroy_thread();
     }
 }
@@ -112,7 +112,7 @@ void ui_event_ToSetButton(lv_event_t * e)
         _ui_screen_change(&ui_Set, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Set_screen_init);
         _ui_screen_delete(&ui_Main);
 
-        // 创建WiFi线程
+        // Create WiFi thread
         wifi_create_thread();
     }
 }
@@ -125,7 +125,7 @@ void ui_event_SetToMainButton(lv_event_t * e)
         _ui_screen_change(&ui_Main, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Main_screen_init);
         _ui_screen_delete(&ui_Set);
 
-        // 终止WiFi线程
+        // Terminate WiFi thread
         wifi_destroy_thread();
     }
 }
@@ -135,7 +135,7 @@ void ui_event_WiFiFreshButton(lv_event_t * e)
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if(event_code == LV_EVENT_CLICKED) {
-        // 刷新WiFi列表
+        // Refresh WiFi list
         wifi_isflush();
     }
 }
@@ -148,7 +148,7 @@ void ui_event_WiFiConnectButton(lv_event_t * e)
         _ui_flag_modify(ui_WiFiEnterPassPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
         _ui_flag_modify(ui_WiFiKeyboard, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
 
-        // 显示WIFi名称到输入密码页
+        // Display the Wi-Fi name to the password input page.
         char ssid_buf[256];
         lv_roller_get_selected_str(ui_WiFiScanRoller, ssid_buf, sizeof(ssid_buf));
         lv_label_set_text_fmt(ui_WiFiSSIDLabel, "%s", ssid_buf);
@@ -164,7 +164,7 @@ void ui_event_WiFiKeyboard(lv_event_t * e)
         _ui_flag_modify(ui_WiFiKeyboard, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
         _ui_flag_modify(ui_WiFiConnectWaitSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
         
-        // 获取WIFi名称和密码
+        // Get the Wi-Fi name and password
         char ssid_buf[256];
         const char *pass_buf;
         lv_roller_get_selected_str(ui_WiFiScanRoller, ssid_buf, sizeof(ssid_buf));
@@ -193,7 +193,7 @@ void ui_event_ToMessageButton(lv_event_t * e)
         _ui_screen_change(&ui_Message, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Message_screen_init);
         _ui_screen_delete(&ui_Main);
 
-        // 创建信息线程
+        // Create information thread
         message_create_thread();
     }
 }
@@ -206,7 +206,7 @@ void ui_event_MessageToMainButton(lv_event_t * e)
         _ui_screen_change(&ui_Main, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Main_screen_init);
         _ui_screen_delete(&ui_Message);
 
-        // 终止信息线程
+        // Terminate information thread
         message_destroy_thread();
     }
 }

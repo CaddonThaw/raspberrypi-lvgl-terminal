@@ -19,20 +19,19 @@
 #include <unistd.h>                     //usleep function
 #include <stdlib.h>                     //malloc function
 
-// WiringPi屏幕引脚定义（BCM编号）
-#define SPI_CHANNEL     0        // SPI通道 (CE0)
-#define SPI_SPEED       40000000 // SPI速度 (40MHz)
-#define PIN_CS          8    // BCM GPIO8 (物理引脚24)
-#define PIN_DC          24   // BCM GPIO24 (物理引脚18)
-#define PIN_RST         25   // BCM GPIO25 (物理引脚22)
-#define PIN_BLK         23   // BCM GPIO23 (物理引脚16)
-
-// WiringPi触摸屏引脚定义（BCM编号）
-#define SCLK_PIN   21  // 物理引脚40
-#define MOSI_PIN   20  // 物理引脚38
-#define MISO_PIN   19  // 物理引脚35
-#define CS_PIN     16  // 物理引脚36
-#define IRQ_PIN    26  // 物理引脚37
+/* Display Pin (BCM) */ 
+#define SPI_CHANNEL     0           // SPI Channel (CE0)
+#define SPI_SPEED       40000000    // SPI Speed (40MHz)
+#define PIN_CS          8           // Physical Pin 24
+#define PIN_DC          24          // Physical Pin 18
+#define PIN_RST         25          // Physical Pin 22
+#define PIN_BLK         23          // Physical Pin 16
+/* Touch Pin (BCM) */ 
+#define SCLK_PIN        21          // Physical Pin 40
+#define MOSI_PIN        20          // Physical Pin 38
+#define MISO_PIN        19          // Physical Pin 35
+#define CS_PIN          16          // Physical Pin 36
+#define IRQ_PIN         26          // Physical Pin 37
 
 /*********************
  * DELAY INTERFACE

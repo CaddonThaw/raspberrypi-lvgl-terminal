@@ -165,24 +165,20 @@ void ili9341_init(void)
 {
     uint8_t data[15];
 
-    // 初始化WiringPi
-    // if (wiringPiSetup() == -1) {  
-    //     fprintf(stderr, "WiringPi初始化失败\n");
-    //     exit(EXIT_FAILURE);
-    // }
+    /* init wiringPi */
     if (wiringPiSetupGpio() == -1) {  
-        fprintf(stderr, "WiringPi初始化失败\n");
+        fprintf(stderr, "Init WiringPi fail\n");
         exit(EXIT_FAILURE);
     }
 
-    // 初始化SPI
+    /* init SPI */ 
     int spi_fd = wiringPiSPISetupMode(SPI_CHANNEL, SPI_SPEED, 0); // Mode 0
     if (spi_fd < 0) {
-        fprintf(stderr, "SPI初始化失败\n");
+        fprintf(stderr, "Init SPI fail\n");
         exit(EXIT_FAILURE);
     }
 
-    // 初始化GPIO
+    /* set pin mode */
     pinMode(PIN_CS, OUTPUT);
     pinMode(PIN_DC, OUTPUT);
     pinMode(PIN_RST, OUTPUT);
@@ -355,7 +351,7 @@ void ili9341_init(void)
 
     /* display on */
     ili9341_write(ILI9341_CMD_MODE, ILI9341_DISPON);
-    digitalWrite(PIN_BLK, 1); // 开启背光
+    digitalWrite(PIN_BLK, 1); // backlight on
 
     usleep(20000);
 }
@@ -378,7 +374,7 @@ void ili9341_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * col
     int32_t len = (act_x2 - act_x1 + 1) * 2;
     lv_coord_t w = (area->x2 - area->x1) + 1;
 
-    digitalWrite(PIN_CS, 0);   // CS拉低
+    digitalWrite(PIN_CS, 0);   // CS low
 
     /* window horizontal */
     digitalWrite(PIN_DC, ILI9341_CMD_MODE);  
@@ -409,7 +405,7 @@ void ili9341_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * col
         color_p += w;
     }
 
-    digitalWrite(PIN_CS, 1);   // CS拉高
+    digitalWrite(PIN_CS, 1);   // CS high
 
     lv_disp_flush_ready(drv);
 }
@@ -452,10 +448,10 @@ void ili9341_rotate(int degrees, bool bgr)
  */
 static inline void ili9341_write(int mode, uint8_t data)
 {
-    digitalWrite(PIN_CS, 0);   // CS拉低
-    digitalWrite(PIN_DC, mode);  
+    digitalWrite(PIN_CS, 0);     // CS low
+    digitalWrite(PIN_DC, mode);  // DC high
     wiringPiSPIDataRW(SPI_CHANNEL, &data, 1);
-    digitalWrite(PIN_CS, 1);   // CS拉高
+    digitalWrite(PIN_CS, 1);     // CS high
 }
 
 /**
@@ -466,10 +462,10 @@ static inline void ili9341_write(int mode, uint8_t data)
  */
 static inline void ili9341_write_array(int mode, uint8_t *data, uint16_t len)
 {
-    digitalWrite(PIN_CS, 0);   // CS拉低
+    digitalWrite(PIN_CS, 0);   // CS low
     digitalWrite(PIN_DC, mode);  
     wiringPiSPIDataRW(SPI_CHANNEL, data, len);
-    digitalWrite(PIN_CS, 1);   // CS拉高
+    digitalWrite(PIN_CS, 1);   // CS high
 }
 
 
