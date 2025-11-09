@@ -1,4 +1,4 @@
-TM7711_NAME ?= tm7711
+TM7711_NAME ?= devices/tm7711
 
 override CXXFLAGS := -I$(LVGL_DIR) $(CXXFLAGS)
 

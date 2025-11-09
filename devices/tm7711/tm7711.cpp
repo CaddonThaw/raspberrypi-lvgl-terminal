@@ -41,7 +41,7 @@ void tm7711_init(void)
     adc_buff[0] = 1 ;
 }
 
-void tm7711_loop()
+void tm7711_loop(void)
 {
     if(TM7711_SDA_T == 0)
     {

@@ -7,9 +7,10 @@
 #include <time.h>
 #include <sys/time.h>
 #include "ui/src/ui.h"
-#include "opencv/cv.h"
-#include "wifi/wifi.h"
-#include "tm7711/tm7711.h"
+#include "devices/opencv/cv.h"
+#include "devices/wifi/wifi.h"
+#include "devices/tm7711/tm7711.h"
+#include "devices/power/power.h"
 
 #define DISP_BUF_SIZE (320 * 240 * 2)
 

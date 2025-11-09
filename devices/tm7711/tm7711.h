@@ -6,6 +6,6 @@
 #include <cstdint>
 
 void tm7711_init(void);
-void tm7711_loop();
+void tm7711_loop(void);
 
 #endif 

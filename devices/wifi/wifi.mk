@@ -1,4 +1,4 @@
-WIFI_NAME ?= wifi
+WIFI_NAME ?= devices/wifi
 
 override CXXFLAGS := -I$(LVGL_DIR) $(CXXFLAGS)
 

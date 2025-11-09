@@ -21,10 +21,11 @@ MAINSRC = ./main.cpp
 include $(LVGL_DIR)/lvgl/lvgl.mk
 include $(LVGL_DIR)/lv_drivers/lv_drivers.mk
 include $(LVGL_DIR)/ui/ui.mk
-include $(LVGL_DIR)/opencv/cv.mk
-include $(LVGL_DIR)/thr/thr.mk
-include $(LVGL_DIR)/wifi/wifi.mk
-include $(LVGL_DIR)/tm7711/tm7711.mk
+include $(LVGL_DIR)/devices/threads/threads.mk
+include $(LVGL_DIR)/devices/opencv/cv.mk
+include $(LVGL_DIR)/devices/wifi/wifi.mk
+include $(LVGL_DIR)/devices/tm7711/tm7711.mk
+include $(LVGL_DIR)/devices/power/power.mk
 
 #CSRCS +=$(LVGL_DIR)/mouse_cursor_icon.c 
 

@@ -5,7 +5,7 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
-#include "thr/threads_conf.h"
+#include "devices/threads/threads_conf.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -21,6 +21,20 @@ lv_obj_t * ui_SetLabel;
 void ui_event_ToMessageButton(lv_event_t * e);
 lv_obj_t * ui_ToMessageButton;
 lv_obj_t * ui_MessageLabel;
+void ui_event_ToPowerButton(lv_event_t * e);
+lv_obj_t * ui_ToPowerButton;
+lv_obj_t * ui_PowerLabel;
+lv_obj_t * ui_PowerPanel;
+void ui_event_ShutdownButton(lv_event_t * e);
+lv_obj_t * ui_ShutdownButton;
+lv_obj_t * ui_ShutdownLabel;
+void ui_event_RebootButton(lv_event_t * e);
+lv_obj_t * ui_RebootButton;
+lv_obj_t * ui_RebootLabel;
+void ui_event_PowerCancelButton(lv_event_t * e);
+lv_obj_t * ui_PowerCancelButton;
+lv_obj_t * ui_PowerCancelLabel;
+lv_obj_t * ui_PowerAskLabel;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_OpenCV
@@ -208,6 +222,46 @@ void ui_event_MessageToMainButton(lv_event_t * e)
 
         // Terminate information thread
         message_destroy_thread();
+    }
+}
+
+void ui_event_ToPowerButton(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if(event_code == LV_EVENT_CLICKED) {
+        _ui_flag_modify(ui_PowerPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_TOGGLE);
+    }
+}
+
+void ui_event_ShutdownButton(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if(event_code == LV_EVENT_CLICKED) {
+
+        // Power off
+        power_shutdown();
+    }
+}
+
+void ui_event_RebootButton(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if(event_code == LV_EVENT_CLICKED) {
+
+        // Power reboot
+        power_reboot();
+    }
+}
+
+void ui_event_PowerCancelButton(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if(event_code == LV_EVENT_CLICKED) {
+        _ui_flag_modify(ui_PowerPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
     }
 }
 

@@ -37,6 +37,20 @@ extern lv_obj_t * ui_SetLabel;
 void ui_event_ToMessageButton(lv_event_t * e);
 extern lv_obj_t * ui_ToMessageButton;
 extern lv_obj_t * ui_MessageLabel;
+void ui_event_ToPowerButton(lv_event_t * e);
+extern lv_obj_t * ui_ToPowerButton;
+extern lv_obj_t * ui_PowerLabel;
+extern lv_obj_t * ui_PowerPanel;
+void ui_event_ShutdownButton(lv_event_t * e);
+extern lv_obj_t * ui_ShutdownButton;
+extern lv_obj_t * ui_ShutdownLabel;
+void ui_event_RebootButton(lv_event_t * e);
+extern lv_obj_t * ui_RebootButton;
+extern lv_obj_t * ui_RebootLabel;
+void ui_event_PowerCancelButton(lv_event_t * e);
+extern lv_obj_t * ui_PowerCancelButton;
+extern lv_obj_t * ui_PowerCancelLabel;
+extern lv_obj_t * ui_PowerAskLabel;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_OpenCV
@@ -88,6 +102,8 @@ LV_IMG_DECLARE(ui_img_set_realease_png);    // assets/Set_Realease.png
 LV_IMG_DECLARE(ui_img_set_press_png);    // assets/Set_Press.png
 LV_IMG_DECLARE(ui_img_message_realease_png);    // assets/Message_Realease.png
 LV_IMG_DECLARE(ui_img_message_press_png);    // assets/Message_Press.png
+LV_IMG_DECLARE(ui_img_power_release_png);    // assets/Power_Release.png
+LV_IMG_DECLARE(ui_img_power_press_png);    // assets/Power_Press.png
 LV_IMG_DECLARE(ui_img_back_realease__png);    // assets/Back_Realease .png
 LV_IMG_DECLARE(ui_img_back_press_png);    // assets/Back_Press.png
 

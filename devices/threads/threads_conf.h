@@ -4,9 +4,10 @@
 #include <pthread.h>
 #include <stdbool.h>   
 #include <unistd.h>   
-#include "opencv/cv.h"
-#include "wifi/wifi.h"
-#include "tm7711/tm7711.h"
+#include "devices/opencv/cv.h"
+#include "devices/wifi/wifi.h"
+#include "devices/tm7711/tm7711.h"
+#include "devices/power/power.h"
 
 void cv_create_thread(void);
 void cv_destroy_thread(void);

@@ -1,4 +1,4 @@
-THR_NAME ?= thr
+THR_NAME ?= devices/threads
 
 override CXXFLAGS := -I$(LVGL_DIR) $(CXXFLAGS)
 

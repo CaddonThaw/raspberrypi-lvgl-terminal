@@ -1,4 +1,4 @@
-CV_NAME ?= opencv
+CV_NAME ?= devices/opencv
 
 override CXXFLAGS := -I$(LVGL_DIR) $(CXXFLAGS)
 

@@ -15,13 +15,13 @@ void ui_Main_screen_init(void)
     lv_imgbtn_set_src(ui_ToOpenCVButton, LV_IMGBTN_STATE_PRESSED, NULL, &ui_img_opencv_press_png, NULL);
     lv_obj_set_width(ui_ToOpenCVButton, 64);
     lv_obj_set_height(ui_ToOpenCVButton, 64);
-    lv_obj_set_x(ui_ToOpenCVButton, 20);
+    lv_obj_set_x(ui_ToOpenCVButton, 10);
     lv_obj_set_y(ui_ToOpenCVButton, 20);
 
     ui_OpenCVLabel = lv_label_create(ui_Main);
     lv_obj_set_width(ui_OpenCVLabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_OpenCVLabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_OpenCVLabel, 22);
+    lv_obj_set_x(ui_OpenCVLabel, 12);
     lv_obj_set_y(ui_OpenCVLabel, 80);
     lv_label_set_text(ui_OpenCVLabel, "OpenCV");
     lv_obj_set_style_text_color(ui_OpenCVLabel, lv_color_hex(0x1095DE), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -33,13 +33,13 @@ void ui_Main_screen_init(void)
     lv_imgbtn_set_src(ui_ToSetButton, LV_IMGBTN_STATE_PRESSED, NULL, &ui_img_set_press_png, NULL);
     lv_obj_set_width(ui_ToSetButton, 64);
     lv_obj_set_height(ui_ToSetButton, 64);
-    lv_obj_set_x(ui_ToSetButton, 100);
+    lv_obj_set_x(ui_ToSetButton, 90);
     lv_obj_set_y(ui_ToSetButton, 20);
 
     ui_SetLabel = lv_label_create(ui_Main);
     lv_obj_set_width(ui_SetLabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_SetLabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_SetLabel, 104);
+    lv_obj_set_x(ui_SetLabel, 94);
     lv_obj_set_y(ui_SetLabel, 80);
     lv_label_set_text(ui_SetLabel, "WiFiSet");
     lv_obj_set_style_text_color(ui_SetLabel, lv_color_hex(0x18AAAC), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -51,20 +51,107 @@ void ui_Main_screen_init(void)
     lv_imgbtn_set_src(ui_ToMessageButton, LV_IMGBTN_STATE_PRESSED, NULL, &ui_img_message_press_png, NULL);
     lv_obj_set_width(ui_ToMessageButton, 64);
     lv_obj_set_height(ui_ToMessageButton, 64);
-    lv_obj_set_x(ui_ToMessageButton, 180);
+    lv_obj_set_x(ui_ToMessageButton, 170);
     lv_obj_set_y(ui_ToMessageButton, 20);
 
     ui_MessageLabel = lv_label_create(ui_Main);
     lv_obj_set_width(ui_MessageLabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_MessageLabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_MessageLabel, 182);
+    lv_obj_set_x(ui_MessageLabel, 172);
     lv_obj_set_y(ui_MessageLabel, 80);
     lv_label_set_text(ui_MessageLabel, "Message");
     lv_obj_set_style_text_color(ui_MessageLabel, lv_color_hex(0xEE8D31), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_MessageLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_ToPowerButton = lv_imgbtn_create(ui_Main);
+    lv_imgbtn_set_src(ui_ToPowerButton, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_power_release_png, NULL);
+    lv_imgbtn_set_src(ui_ToPowerButton, LV_IMGBTN_STATE_PRESSED, NULL, &ui_img_power_press_png, NULL);
+    lv_obj_set_width(ui_ToPowerButton, 64);
+    lv_obj_set_height(ui_ToPowerButton, 64);
+    lv_obj_set_x(ui_ToPowerButton, 250);
+    lv_obj_set_y(ui_ToPowerButton, 20);
+
+    ui_PowerLabel = lv_label_create(ui_Main);
+    lv_obj_set_width(ui_PowerLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_PowerLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_PowerLabel, 260);
+    lv_obj_set_y(ui_PowerLabel, 80);
+    lv_label_set_text(ui_PowerLabel, "Power");
+    lv_obj_set_style_text_color(ui_PowerLabel, lv_color_hex(0xDE1C00), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_PowerLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_PowerPanel = lv_obj_create(ui_Main);
+    lv_obj_set_width(ui_PowerPanel, 220);
+    lv_obj_set_height(ui_PowerPanel, 90);
+    lv_obj_set_align(ui_PowerPanel, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_PowerPanel, LV_OBJ_FLAG_HIDDEN);     /// Flags
+    lv_obj_clear_flag(ui_PowerPanel, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_border_color(ui_PowerPanel, lv_color_hex(0xFF0031), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(ui_PowerPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_ShutdownButton = lv_btn_create(ui_PowerPanel);
+    lv_obj_set_width(ui_ShutdownButton, 80);
+    lv_obj_set_height(ui_ShutdownButton, 40);
+    lv_obj_set_align(ui_ShutdownButton, LV_ALIGN_BOTTOM_LEFT);
+    lv_obj_add_flag(ui_ShutdownButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_ShutdownButton, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_ShutdownButton, lv_color_hex(0xFD2952), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_ShutdownButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_ShutdownLabel = lv_label_create(ui_ShutdownButton);
+    lv_obj_set_width(ui_ShutdownLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_ShutdownLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_ShutdownLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_ShutdownLabel, "Shutdown");
+
+    ui_RebootButton = lv_btn_create(ui_PowerPanel);
+    lv_obj_set_width(ui_RebootButton, 80);
+    lv_obj_set_height(ui_RebootButton, 40);
+    lv_obj_set_align(ui_RebootButton, LV_ALIGN_BOTTOM_RIGHT);
+    lv_obj_add_flag(ui_RebootButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_RebootButton, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_RebootButton, lv_color_hex(0xFF2852), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_RebootButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_RebootLabel = lv_label_create(ui_RebootButton);
+    lv_obj_set_width(ui_RebootLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_RebootLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_RebootLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_RebootLabel, "Reboot");
+
+    ui_PowerCancelButton = lv_btn_create(ui_PowerPanel);
+    lv_obj_set_width(ui_PowerCancelButton, 20);
+    lv_obj_set_height(ui_PowerCancelButton, 20);
+    lv_obj_set_x(ui_PowerCancelButton, -10);
+    lv_obj_set_y(ui_PowerCancelButton, -10);
+    lv_obj_add_flag(ui_PowerCancelButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_PowerCancelButton, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_PowerCancelButton, lv_color_hex(0xFF2852), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_PowerCancelButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_PowerCancelLabel = lv_label_create(ui_PowerCancelButton);
+    lv_obj_set_width(ui_PowerCancelLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_PowerCancelLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_PowerCancelLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_PowerCancelLabel, "x");
+
+    ui_PowerAskLabel = lv_label_create(ui_PowerPanel);
+    lv_obj_set_width(ui_PowerAskLabel, 180);
+    lv_obj_set_height(ui_PowerAskLabel, 20);
+    lv_obj_set_x(ui_PowerAskLabel, 10);
+    lv_obj_set_y(ui_PowerAskLabel, -27);
+    lv_obj_set_align(ui_PowerAskLabel, LV_ALIGN_CENTER);
+    lv_label_set_long_mode(ui_PowerAskLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(ui_PowerAskLabel, "Do you want to shutdown or reboot?");
+    lv_obj_set_style_text_color(ui_PowerAskLabel, lv_color_hex(0xFF2852), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_PowerAskLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     lv_obj_add_event_cb(ui_ToOpenCVButton, ui_event_ToOpenCVButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ToSetButton, ui_event_ToSetButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ToMessageButton, ui_event_ToMessageButton, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_ToPowerButton, ui_event_ToPowerButton, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_ShutdownButton, ui_event_ShutdownButton, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_RebootButton, ui_event_RebootButton, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_PowerCancelButton, ui_event_PowerCancelButton, LV_EVENT_ALL, NULL);
 
 }
