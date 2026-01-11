@@ -11,32 +11,31 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04  # Match the target environment
+    runs-on: ubuntu-24.04  # Ubuntu 24.04 environment
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up environment
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake pkg-config
-        sudo apt-get install -y libopencv-dev
-        sudo apt-get install -y wiringpi
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - name: Install dependencies
+    - name: Build Docker image
       run: |
-        echo "Installing dependencies..."
-        sudo apt-get install -y libiw-dev
+        docker build -t lvgl-opencv-app .
 
-    - name: Build project
+    - name: Extract demo binary from Docker container
       run: |
-        make clean
-        make
-        ls -la
+        # Create a temporary container from the image
+        docker create --name temp_container lvgl-opencv-app
+        # Copy the demo binary from the container
+        docker cp temp_container:/app/demo ./demo
+        # Clean up the temporary container
+        docker rm temp_container
+        # Verify the binary exists
         if [ -f "./demo" ]; then
-          echo "Build successful!"
-          echo "demo=$(pwd)/demo" >> $GITHUB_ENV
+          echo "Build successful! demo binary extracted."
+          ls -la ./demo
         else
           echo "Build failed! demo binary not found."
           exit 1
