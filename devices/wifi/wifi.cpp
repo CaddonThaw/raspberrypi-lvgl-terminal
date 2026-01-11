@@ -1,20 +1,20 @@
 #include "wifi.h"
 #include "ui/src/ui.h"
 
-/*wifi扫描*/
+/* WiFi scanning */
 #include <iwlib.h>
-/*wifi获取IP*/
+/* WiFi getting IP */
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
-/*wifi连接*/
+/* WiFi connection */
 #include <sys/wait.h>
 
-// 扫描附近wifi
+// Scan nearby WiFi networks
 int wifi_scan(void)
 {
-    int sock = iw_sockets_open();  // 创建无线通信socket
+    int sock = iw_sockets_open();  // Create wireless communication socket
     if(sock < 0) 
     {
         lv_label_set_text(ui_IPAddrLabel, "无法打开无线socket");
@@ -22,14 +22,14 @@ int wifi_scan(void)
         return -1;
     }
 
-    /******扫描附近WiFi******/
+    /****** Scan nearby WiFi ******/
     lv_label_set_text(ui_IPAddrLabel, "正在检查当前连接...");
     lv_roller_set_options(ui_WiFiScanRoller, "正在扫描附近WiFi...", LV_ROLLER_MODE_NORMAL);
 
-    char buffer[4096] = {0};         // 存储WiFi列表的缓冲区
-    wireless_scan_head scan_results; // 扫描结果链表头
+    char buffer[4096] = {0};         // Buffer to store WiFi list
+    wireless_scan_head scan_results; // Scan results linked list head
 
-    // 执行WiFi扫描
+    // Execute WiFi scan
     if(iw_scan(sock, (char *)"wlan0", 30, &scan_results) < 0) 
     {
         close(sock);
@@ -38,10 +38,10 @@ int wifi_scan(void)
         return -1;
     }
 
-    int is_first = 1;  // 标记是否为第一个SSID
+    int is_first = 1;  // Flag to mark if it's the first SSID
     wireless_scan *ap = scan_results.result;
     
-    // 遍历扫描结果
+    // Iterate through scan results
     while(ap != NULL) 
     {
         char ssid[IW_ESSID_MAX_SIZE + 1] = {0};
@@ -54,12 +54,12 @@ int wifi_scan(void)
             strncpy(ssid, (const char*)ap->b.essid, ssid_len);
             ssid[ssid_len] = '\0';
             
-            // 额外检查空ESSID
+            // Additional check for empty ESSID
             if(ssid[0] == '\0')strcpy(ssid, "隐藏网络");
         } 
         else strcpy(ssid, "隐藏网络");
              
-        // 拼接SSID到缓冲区
+        // Concatenate SSID to buffer
         if(strlen(buffer) + strlen(ssid) + 2 <= sizeof(buffer))
         {
             if(!is_first)strcat(buffer, "\n");    
@@ -67,10 +67,10 @@ int wifi_scan(void)
             is_first = 0;
         }
         
-        ap = ap->next;  // 下一个接入点
+        ap = ap->next;  // Next access point
     }
 
-    // 更新UI控件
+    // Update UI controls
     lv_roller_set_options(ui_WiFiScanRoller, buffer, LV_ROLLER_MODE_NORMAL);
     if(wifi_IP() == 0)return 0;
     else return -1;
@@ -85,7 +85,7 @@ int wifi_IP(void)
         return -1;
     }
 
-    /******获取当前IP地址******/
+    /****** Get current IP address ******/
     struct wireless_config config;
 
     if(iw_get_basic_config(sock, (const char *)"wlan0", &config) < 0) 
@@ -97,14 +97,14 @@ int wifi_IP(void)
 
     close(sock);
 
-    // 检查SSID是否有效
+    // Check if SSID is valid
     if(config.essid[0] == '\0')
     {
         lv_label_set_text(ui_IPAddrLabel, "无法获取IP地址...");
         return -1;
     }
     
-    // 获取IP地址
+    // Get IP address
     struct ifaddrs *ifaddr, *ifa;
     char ipstr[INET_ADDRSTRLEN];
 
@@ -123,8 +123,8 @@ int wifi_IP(void)
             // IPv4
             struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
             inet_ntop(AF_INET, &addr->sin_addr, ipstr, sizeof(ipstr));
-            // printf("WiFi名称: %s, IP地址: %s\n", config.essid, ipstr);
-            lv_label_set_text_fmt(ui_IPAddrLabel, "已连接:%s IP:%s", config.essid, ipstr);
+            // printf("WiFi Name: %s, IP Address: %s\n", config.essid, ipstr);
+            lv_label_set_text_fmt(ui_IPAddrLabel, "Connected:%s IP:%s", config.essid, ipstr);
             freeifaddrs(ifaddr);
             return 0;
         }
@@ -137,20 +137,20 @@ int wifi_IP(void)
 
 int wifi_connect(const char* ssid, const char* pass)
 {
-    // 转义SSID和密码中的特殊字符
+    // Escape special characters in SSID and password
     char safe_ssid[256], safe_pass[256];
     escape_shell_chars(ssid, safe_ssid, sizeof(safe_ssid));
     escape_shell_chars(pass, safe_pass, sizeof(safe_pass));
 
     // printf("%s,%s\r\n",safe_ssid,safe_pass);
 
-    // 构建nmcli命令
+    // Build nmcli command
     char cmd[512];
     snprintf(cmd, sizeof(cmd), 
         "sudo nmcli --terse dev wifi connect %s password %s 2>&1",
         safe_ssid, safe_pass);
 
-    // 执行命令并捕获输出
+    // Execute command and capture output
     FILE *fp = popen(cmd, "r");
     if(!fp) 
     {
@@ -159,7 +159,7 @@ int wifi_connect(const char* ssid, const char* pass)
         return -1;
     }
 
-    // 读取命令输出
+    // Read command output
     char output[512] = {0};
     char line[128];
     while(fgets(line, sizeof(line), fp)) 
@@ -168,11 +168,11 @@ int wifi_connect(const char* ssid, const char* pass)
     }
     _ui_flag_modify(ui_WiFiConnectWaitSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
 
-    // 获取执行状态
+    // Get execution status
     int status = pclose(fp);
     int exit_code = WEXITSTATUS(status);
 
-    // 结果处理
+    // Result processing
     if(exit_code == 0) 
     {
         wifi_IP(); // 更新IP显示
@@ -185,22 +185,22 @@ int wifi_connect(const char* ssid, const char* pass)
     }
 }
 
-// 辅助函数：转义特殊字符
+// Helper function: escape special characters
 void escape_shell_chars(const char *input, char *output, uint16_t out_size) 
 {
     uint16_t j = 0;
-    output[j++] = '\''; // 开始单引号
+    output[j++] = '\''; // Start single quote
     for(uint16_t i = 0; input[i] != '\0' && j < out_size-2; ++i) 
     {
         if(input[i] == '\'') 
         {
-            // 单引号转义为 '\''
+            // Single quote escaped as '\'''
             if(j + 4 < out_size) 
             {
-                output[j++] = '\''; // 结束当前引号
-                output[j++] = '\\'; // 反斜杠
-                output[j++] = '\''; // 新引号
-                output[j++] = '\''; // 重新开始引号
+                output[j++] = '\''; // End current quote
+                output[j++] = '\\'; // Backslash
+                output[j++] = '\''; // New quote
+                output[j++] = '\''; // Restart quote
             }
         } 
         else 
@@ -208,6 +208,6 @@ void escape_shell_chars(const char *input, char *output, uint16_t out_size)
             output[j++] = input[i];
         }
     }
-    output[j++] = '\''; // 结束单引号
+    output[j++] = '\''; // End single quote
     output[j] = '\0';
 }

@@ -20,7 +20,7 @@ static lv_img_dsc_t cv_img_dsc = {
         .h = IMG_HEIGHT
     },
     .data_size = IMG_WIDTH * IMG_HEIGHT * 2,
-    .data = NULL  // 动态更新这个指针
+    .data = NULL  // Dynamically update this pointer
 };
 lv_obj_t * cv_img;
 lv_obj_t * cv_label;
@@ -38,7 +38,7 @@ bool cv_init()
     }
 
 #if FPS_SHOW
-    // 帧率计算相关变量
+    // Variables related to FPS calculation
     int64 start_time = cv::getTickCount();
     int frame_count = 0;
     double fps = 0;
@@ -54,55 +54,55 @@ bool cv_init()
 
 void cv_loop()
 {
-    cap >> frame;  // 获取摄像头画面
+    cap >> frame;  // Get camera frame
 
-    // 调整图像尺寸匹配屏幕分辨率
+    // Resize image to match screen resolution
     cv::resize(frame, frame, cv::Size(IMG_WIDTH, IMG_HEIGHT));
 
-    // 红色识别处理
-    // 转换到HSV颜色空间
+    // Red color recognition processing
+    // Convert to HSV color space
     cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
 
-    // 定义红色范围（HSV空间）
+    // Define red range (in HSV space)
     cv::Mat lower_red, upper_red;
-    cv::inRange(hsv, cv::Scalar(0, 70, 50), cv::Scalar(10, 255, 255), lower_red);    // 低范围红色
-    cv::inRange(hsv, cv::Scalar(160, 70, 50), cv::Scalar(180, 255, 255), upper_red);  // 高范围红色
+    cv::inRange(hsv, cv::Scalar(0, 70, 50), cv::Scalar(10, 255, 255), lower_red);    // Low range red
+    cv::inRange(hsv, cv::Scalar(160, 70, 50), cv::Scalar(180, 255, 255), upper_red);  // High range red
     
-    // 合并红色掩膜
+    // Merge red masks
     red_mask = lower_red | upper_red;
     
-    // 形态学处理
+    // Morphological processing
     cv::morphologyEx(red_mask, red_mask, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5)));
     
-    // 查找轮廓
+    // Find contours
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(red_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     
-    // 绘制边界框
+    // Draw bounding boxes
     for (const auto& contour : contours) {
-        if(cv::contourArea(contour) > 500) { // 面积阈值过滤小噪声
+        if(cv::contourArea(contour) > 500) { // Area threshold to filter small noise
             cv::Rect rect = cv::boundingRect(contour);
-            cv::rectangle(frame, rect, cv::Scalar(0, 255, 0), 2); // 用绿色框标记
+            cv::rectangle(frame, rect, cv::Scalar(0, 255, 0), 2); // Mark with green box
         }
     }
 
 #if FPS_SHOW
-    // 计算并显示FPS
+    // Calculate and display FPS
     frame_count++;
-    if (frame_count >= 10) { // 每10帧计算一次
+    if (frame_count >= 10) { // Calculate every 10 frames
         double elapsed = (cv::getTickCount() - start_time) / cv::getTickFrequency();
         fps = frame_count / elapsed;
         start_time = cv::getTickCount();
         frame_count = 0;
     }
     
-    // 在画面上显示FPS
+    // Display FPS on the screen
     std::string fps_str = cv::format("FPS:%.1f", fps);
     cv::putText(frame, fps_str, cv::Point(0, 20), cv::FONT_HERSHEY_SIMPLEX, 
                 0.8, cv::Scalar(0, 255, 0), 2);
 #endif
             
-    // 将BGR转换为RGB格式
+    // Convert BGR to RGB format
     cv::cvtColor(frame, trans_frame, cv::COLOR_BGR2BGR565);
 
     uint16_t *display_buffer = (uint16_t*)trans_frame.data;
@@ -120,13 +120,13 @@ void cv_deinit(bool ret)
 
 uint8_t* transfor_image(uint16_t *data) 
 {
-    // 创建转换缓冲区（仅需转换一次）
+    // Create conversion buffer (only needs to be created once)
     static uint8_t converted_buffer[IMG_WIDTH * IMG_HEIGHT * 2]; 
     volatile uint8_t *dst = converted_buffer;
     volatile uint16_t *src = data;
     
     for(uint32_t i = 0; i < IMG_WIDTH * IMG_HEIGHT; i += 64) { 
-        // 批量处理64个像素
+        // Process 64 pixels in batch
         uint16_t p1 = *src++;uint16_t p2 = *src++;
         uint16_t p3 = *src++;uint16_t p4 = *src++;
         uint16_t p5 = *src++;uint16_t p6 = *src++;
