@@ -130,6 +130,42 @@ LVGL_OpenCV/
 3. 在主线程中启动该模块的线程
 4. 如需要，更新UI以反映新功能
 
+## 脚本工具
+
+### build.sh
+
+编译项目并安装依赖项的脚本。
+
+**使用方法：**
+```bash
+./scripts/build.sh
+```
+
+### install.sh
+
+设置开机自启动服务的脚本，使demo程序在系统启动时自动运行，并在程序崩溃时自动重启。
+
+**使用方法：**
+
+启用开机自启动：
+```bash
+./scripts/install.sh --enable
+```
+
+禁用开机自启动并停止当前运行的服务：
+```bash
+./scripts/install.sh --disable
+```
+
+显示帮助信息：
+```bash
+./scripts/install.sh --help
+```
+
+**注意事项：**
+- 在运行任一脚本前，请确保当前目录下存在 `demo` 可执行文件
+- `install.sh` 脚本需要管理员权限来管理系统服务
+
 ## 故障排除
 
 如果遇到编译错误，请检查：
