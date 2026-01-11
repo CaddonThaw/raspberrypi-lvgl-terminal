@@ -17,12 +17,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Build Docker image
+    - name: Build Docker image for ARM64
       run: |
-        docker build -t lvgl-opencv-app .
+        docker build --platform linux/arm64 -t lvgl-opencv-app .
 
     - name: Extract demo binary from Docker container
       run: |
@@ -60,9 +65,9 @@ jobs:
         body: |
           Release of demo firmware v${{ inputs.release_version || '1.0.0' }}
           
-          Built on Ubuntu 24.04 environment with:
-          - GCC/G++ 13.3.0
-          - OpenCV 4.6.0
+          Built in ARM64 Docker environment (Raspberry Pi compatible) with:
+          - GCC/G++ (Ubuntu 24.04)
+          - OpenCV
           - WiringPi
           - Other project dependencies
           
