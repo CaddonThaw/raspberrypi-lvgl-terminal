@@ -1,6 +1,9 @@
-# LVGL OpenCV 嵌入式图形界面项目
+# raspberrypi-lvgl-terminal
 
-这是一个基于LVGL嵌入式GUI框架和OpenCV计算机视觉库的综合项目，适用于嵌入式Linux平台。项目集成了多种设备功能，包括摄像头、WiFi、电源管理和传感器等。
+基于LVGL的树莓派4B终端。集成多种设备功能，包括OpenCV摄像头、WiFi、电源管理和传感器等，让你落灰的树莓派可脱离HDMI显示屏获取摄像头画面、连接WiFi、获取IP、开关机等。
+
+![Main Interface](images/main.jpg)
+![WiFi Interface](images/wifi.jpg)
 
 ## 功能特性
 
@@ -14,7 +17,7 @@
 
 ## 硬件要求
 
-- 支持Linux的嵌入式平台
+- 树莓派4B
 - ILI9341显示屏驱动
 - XPT2046触摸屏控制器
 - USB摄像头
@@ -61,6 +64,30 @@ LVGL_OpenCV/
 ├── main.cpp             # 主程序入口
 └── Makefile             # 构建脚本
 ```
+
+## 引脚映射
+
+### 显示屏引脚 (ILI9341)
+- **SPI_CHANNEL**: 0 (CE0)
+- **SPI_SPEED**: 40MHz
+- **PIN_CS (片选)**: BCM 8 (物理引脚 24)
+- **PIN_DC (数据/命令)**: BCM 24 (物理引脚 18)
+- **PIN_RST (复位)**: BCM 25 (物理引脚 22)
+- **PIN_BLK (背光控制)**: BCM 23 (物理引脚 16)
+
+### 触摸屏引脚 (XPT2046)
+- **SCLK (时钟)**: BCM 21 (物理引脚 40)
+- **MOSI (主输出从输入)**: BCM 20 (物理引脚 38)
+- **MISO (主输入从输出)**: BCM 19 (物理引脚 35)
+- **CS (片选)**: BCM 16 (物理引脚 36)
+- **IRQ (中断请求)**: BCM 26 (物理引脚 37)
+
+### TM7711 ADC引脚
+- **TM7711_CLK_PIN**: BCM 27 (GPIO.2)
+- **TM7711_SDA_PIN**: BCM 17 (GPIO.0)
+
+### 电源管理引脚
+- **PIN_BLK**: BCM 23 (物理引脚 16) - 用于电源控制
 
 ## 功能模块说明
 
@@ -114,7 +141,3 @@ LVGL_OpenCV/
 - 确保硬件设备已正确连接
 - 检查设备权限
 - 确认内核支持所需设备驱动
-
-## 许可证
-
-本项目基于LVGL的MIT许可证，可在商业和开源项目中自由使用。
