@@ -14,8 +14,9 @@ sudo apt-get install -y \
     pkg-config \
     libopencv-dev \
     libiw-dev \
-    wiringpi \
     git
+git clone https://github.com/WiringPi/WiringPi.git 
+cd WiringPi && ./build && cd ..
 
 if [ -f "demo" ]; then
     echo "删除旧的 demo 文件..."
