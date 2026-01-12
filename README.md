@@ -34,6 +34,25 @@
 
 ## 编译和运行
 
+### 克隆仓库
+
+```bash
+git clone https://github.com/CaddonThaw/raspberrypi-lvgl-terminal.git && cd raspberrypi-lvgl-terminal
+```
+
+### 安装依赖
+
+```bash
+sudo apt-get install -y \
+    build-essential \
+    cmake \
+    pkg-config \
+    libopencv-dev \
+    libiw-dev 
+git clone https://github.com/WiringPi/WiringPi.git 
+cd WiringPi && ./build && cd ..
+```
+
 ### 编译
 
 ```bash
