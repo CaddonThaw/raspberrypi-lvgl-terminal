@@ -258,6 +258,20 @@
 #  define R61581_LV_COLOR_DEPTH 16    /*Fix 16 bit*/
 #endif
 
+/*----------------
+ *    ST7789
+ *--------------*/
+#ifndef USE_ST7789
+#  define USE_ST7789          1
+#endif
+
+#if USE_ST7789
+#  define ST7789_HOR_RES      320
+#  define ST7789_VER_RES      240
+#  define ST7789_GAMMA         1
+#  define ST7789_TEARING       0
+#endif
+
 /*------------------------------
  *  ST7565 (Monochrome, low res.)
  *-----------------------------*/
@@ -320,7 +334,7 @@
  *  ILI9341 240X320 TFT LCD
  *------------------------------------------------*/
 #ifndef USE_ILI9341
-#  define USE_ILI9341       1
+#  define USE_ILI9341       0
 #endif
 
 #if USE_ILI9341

@@ -1,6 +1,6 @@
 #include "lvgl/lvgl.h"
 #include "lvgl/demos/lv_demos.h"
-#include "lv_drivers/display/ILI9341.h"
+#include "lv_drivers/display/ST7789.h"
 #include "lv_drivers/indev/XPT2046.h"
 #include <unistd.h>
 #include <pthread.h>
@@ -20,7 +20,7 @@ int main(void)
     lv_init();
 
     /*Linux frame buffer device init*/
-    ili9341_init();
+    st7789_init();
 
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -33,7 +33,7 @@ int main(void)
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.draw_buf = &disp_buf;
-    disp_drv.flush_cb = ili9341_flush;
+    disp_drv.flush_cb = st7789_flush;
     disp_drv.hor_res = 320;
     disp_drv.ver_res = 240;
     lv_disp_drv_register(&disp_drv);
