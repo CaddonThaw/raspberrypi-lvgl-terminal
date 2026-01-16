@@ -334,7 +334,7 @@
  *  ILI9341 240X320 TFT LCD
  *------------------------------------------------*/
 #ifndef USE_ILI9341
-#  define USE_ILI9341       0
+#  define USE_ILI9341       1
 #endif
 
 #if USE_ILI9341
