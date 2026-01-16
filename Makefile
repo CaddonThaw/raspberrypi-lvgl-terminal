@@ -40,6 +40,22 @@ OBJS = $(AOBJS) $(COBJS) $(CXXOBJS) $(MAINOBJ)
 
 all: default
 
+DISPLAY_TYPE ?= ST7789
+
+ili9341:
+	$(MAKE) DISPLAY_TYPE=ILI9341
+
+st7789:
+	$(MAKE) DISPLAY_TYPE=ST7789
+
+ifeq ($(DISPLAY_TYPE), ILI9341)
+CFLAGS += -DILI9341=1 
+CXXFLAGS += -DILI9341=1
+else
+CFLAGS += -DST7789=1 
+CXXFLAGS += -DST7789=1 
+endif
+
 build/%.o: %.c
 	@mkdir -p $(@D)
 	@$(CC)  $(CFLAGS) -c $< -o $@

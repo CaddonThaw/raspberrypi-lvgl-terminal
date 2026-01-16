@@ -1,5 +1,6 @@
 #include "lvgl/lvgl.h"
 #include "lvgl/demos/lv_demos.h"
+#include "lv_drivers/display/ILI9341.h"
 #include "lv_drivers/display/ST7789.h"
 #include "lv_drivers/indev/XPT2046.h"
 #include <unistd.h>
@@ -14,13 +15,31 @@
 
 #define DISP_BUF_SIZE (320 * 240 * 2)
 
+void display_init(void)
+{
+#if defined(ILI9341)
+    ili9341_init();
+#else defined(ST7789)
+    st7789_init();
+#endif
+}
+
+void display_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
+{
+#if defined(ILI9341)
+    ili9341_flush(disp_drv, area, color_p);
+#else defined(ST7789)
+    st7789_flush(disp_drv, area, color_p);
+#endif
+}
+
 int main(void)
 {
     /*LittlevGL init*/
     lv_init();
 
     /*Linux frame buffer device init*/
-    st7789_init();
+    display_init();
 
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -33,9 +52,7 @@ int main(void)
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.draw_buf = &disp_buf;
-    disp_drv.flush_cb = st7789_flush;
-    disp_drv.hor_res = 320;
-    disp_drv.ver_res = 240;
+    disp_drv.flush_cb = display_flush;
     lv_disp_drv_register(&disp_drv);
 
     xpt2046_init();
