@@ -133,7 +133,7 @@ void xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
     }
 
     data->point.x = x;
-    data->point.y = ST7789_VER_RES - y;
+    data->point.y = y;
 
     // return false;
 }

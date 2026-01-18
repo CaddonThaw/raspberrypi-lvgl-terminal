@@ -19,7 +19,7 @@ void display_init(void)
 {
 #if defined(ILI9341)
     ili9341_init();
-#else defined(ST7789)
+#elif defined(ST7789)
     st7789_init();
 #endif
 }
@@ -28,7 +28,7 @@ void display_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *c
 {
 #if defined(ILI9341)
     ili9341_flush(disp_drv, area, color_p);
-#else defined(ST7789)
+#elif defined(ST7789)
     st7789_flush(disp_drv, area, color_p);
 #endif
 }

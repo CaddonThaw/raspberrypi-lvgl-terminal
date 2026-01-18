@@ -56,7 +56,14 @@ cd WiringPi && ./build && cd ..
 ### 编译
 
 ```bash
+# 屏幕型号默认为ST7789
 make
+
+# 如果屏幕型号是ST7789
+make DISPLAY=ST7789
+
+# 如果屏幕型号是ILI9341
+make DISPLAY=ILI9341
 ```
 
 ### 运行

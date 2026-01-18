@@ -398,7 +398,13 @@
 #  define XPT2046_Y_MAX       3800
 #  define XPT2046_AVG         4
 #  define XPT2046_X_INV       1
+
+# if defined(ILI9341)
 #  define XPT2046_Y_INV       1
+# elif defined(ST7789)
+#  define XPT2046_Y_INV       0
+# endif
+
 #  define XPT2046_XY_SWAP     0
 #endif
 

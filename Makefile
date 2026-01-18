@@ -15,6 +15,16 @@ LDFLAGS ?= -lm -lwiringPi -lpthread $(shell pkg-config --libs opencv4) -liw
 
 BIN = demo
 
+DISPLAY ?= ST7789
+
+ifeq ($(DISPLAY), ILI9341)
+CFLAGS += -DILI9341
+CXXFLAGS += -DILI9341
+else
+CFLAGS += -DST7789 
+CXXFLAGS += -DST7789 
+endif
+
 #Collect the files to compile
 MAINSRC = ./main.cpp
 
@@ -39,22 +49,6 @@ SRCS = $(ASRCS) $(CSRCS) $(MAINSRC)
 OBJS = $(AOBJS) $(COBJS) $(CXXOBJS) $(MAINOBJ)
 
 all: default
-
-DISPLAY_TYPE ?= ST7789
-
-ili9341:
-	$(MAKE) DISPLAY_TYPE=ILI9341
-
-st7789:
-	$(MAKE) DISPLAY_TYPE=ST7789
-
-ifeq ($(DISPLAY_TYPE), ILI9341)
-CFLAGS += -DILI9341=1 
-CXXFLAGS += -DILI9341=1
-else
-CFLAGS += -DST7789=1 
-CXXFLAGS += -DST7789=1 
-endif
 
 build/%.o: %.c
 	@mkdir -p $(@D)
