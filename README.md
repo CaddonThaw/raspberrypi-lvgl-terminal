@@ -1,6 +1,6 @@
 # raspberrypi-lvgl-terminal
 
-基于LVGL的树莓派4B终端。集成多种设备功能，包括OpenCV摄像头、WiFi、电源管理和传感器等，让你落灰的树莓派可脱离HDMI显示屏获取摄像头画面、连接WiFi、获取IP、开关机等。
+基于LVGL的树莓派4B终端。集成多种设备功能，包括OpenCV摄像头、WiFi、电源管理和传感器等，让你落灰的树莓派可脱离HDMI显示屏获取摄像头画面、连接WiFi、获取IP、关机重启等。
 
 ![Main Interface](images/main.jpg)
 ![WiFi Interface](images/wifi.jpg)
