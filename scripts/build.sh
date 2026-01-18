@@ -14,6 +14,7 @@ sudo apt-get install -y \
     pkg-config \
     libopencv-dev \
     libiw-dev \
+    network-manager \
     git
 git clone https://github.com/WiringPi/WiringPi.git 
 cd WiringPi && ./build && cd ..
