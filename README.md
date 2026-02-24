@@ -204,7 +204,7 @@ LVGL_OpenCV/
 - 检查设备权限
 - 确认内核支持所需设备驱动
 
-如果连接WiFi失败
+如果连接WiFi失败：
 - 删除所有WiFi配置文件 `sudo rm /etc/netplan/*`
 - 重新应用配置 `sudo netplan apply`
 - 再次尝试连接WiFi
