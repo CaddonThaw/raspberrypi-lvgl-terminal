@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
-#include "ui/src/ui.h"
+#include "ui/ui.h"
 #include "devices/opencv/cv.h"
 #include "devices/wifi/wifi.h"
 #include "devices/tm7711/tm7711.h"
@@ -53,7 +53,7 @@ int main(void)
     lv_indev_drv_register(&indev_drv_1);
 
     /*Create a Demo*/
-    ui_init();
+    ui_main_screen_init();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1)
