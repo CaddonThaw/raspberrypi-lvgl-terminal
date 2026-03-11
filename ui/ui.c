@@ -167,7 +167,7 @@ static void build_top_panel(lv_obj_t *scr)
 
     /* ── Time (single line, clipped, vertically centred) ── */
     g_lbl_time = lv_label_create(bg);
-    lv_label_set_text(g_lbl_time, "23:28");
+    lv_label_set_text(g_lbl_time, "-");
     lv_label_set_long_mode(g_lbl_time, LV_LABEL_LONG_CLIP);
     lv_obj_set_width(g_lbl_time, TIME_LABEL_W);
     lv_obj_set_style_text_font(g_lbl_time, &lv_font_montserrat_28, 0);
@@ -207,7 +207,7 @@ static void build_top_panel(lv_obj_t *scr)
     /* Row 0 – CPU Temperature */
     MAKE_INFO_ROW(bg,
                   LV_SYMBOL_WARNING,
-                  "25\xc2\xb0""C",
+                  "none",
                   0, g_lbl_cpu,
                   LV_LABEL_LONG_CLIP,
                   INFO_TEXT_W);
@@ -215,7 +215,7 @@ static void build_top_panel(lv_obj_t *scr)
     /* Row 1 – Battery percentage (default 80%) */
     MAKE_INFO_ROW(bg,
                   LV_SYMBOL_BATTERY_FULL,
-                  "80%",
+                  "none",
                   1, g_lbl_bat,
                   LV_LABEL_LONG_CLIP,
                   INFO_TEXT_W);
@@ -223,7 +223,7 @@ static void build_top_panel(lv_obj_t *scr)
     /* Row 2 – IP Address (circular scroll for long strings) */
     MAKE_INFO_ROW(bg,
                   LV_SYMBOL_WIFI,
-                  "192.168.255.255",
+                  "none",
                   2, g_lbl_ip,
                   LV_LABEL_LONG_SCROLL_CIRCULAR,
                   INFO_TEXT_W);

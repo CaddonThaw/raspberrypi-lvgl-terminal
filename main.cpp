@@ -9,8 +9,8 @@
 #include "ui/ui.h"
 #include "devices/opencv/cv.h"
 #include "devices/wifi/wifi.h"
-#include "devices/tm7711/tm7711.h"
 #include "devices/power/power.h"
+#include "devices/threads/threads_conf.h"
 
 #define LCD_HOR_RES 160
 #define LCD_VER_RES 128
@@ -54,6 +54,8 @@ int main(void)
 
     /*Create a Demo*/
     ui_main_screen_init();
+
+    data_create_thread();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1)

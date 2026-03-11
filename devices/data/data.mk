@@ -1,4 +1,4 @@
-DATE_NAME ?= devices/date
+DATE_NAME ?= devices/data
 
 override CXXFLAGS := -I$(LVGL_DIR) $(CXXFLAGS)
 

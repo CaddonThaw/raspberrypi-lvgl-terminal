@@ -5,6 +5,6 @@
 #include <stdio.h>
 #include <cstdint>
 
-void date_loop(void);
+void data_loop(void);
 
 #endif 
