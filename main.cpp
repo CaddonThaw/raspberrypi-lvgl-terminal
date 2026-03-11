@@ -21,8 +21,11 @@ int main(void)
     /*LittlevGL init*/
     lv_init();
 
-    /*Linux frame buffer device init*/
+    /*ST7735S display init*/
     st7735s_init();
+
+    /*XPT2046 touchpad init*/
+    xpt2046_init();
 
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -40,7 +43,7 @@ int main(void)
     disp_drv.ver_res = LCD_VER_RES;
     lv_disp_drv_register(&disp_drv);
 
-    xpt2046_init();
+    /*Initialize and register a input device driver*/
     static lv_indev_drv_t indev_drv_1;
     lv_indev_drv_init(&indev_drv_1); /*Basic initialization*/
     indev_drv_1.type = LV_INDEV_TYPE_POINTER;
@@ -50,10 +53,7 @@ int main(void)
     lv_indev_drv_register(&indev_drv_1);
 
     /*Create a Demo*/
-    lv_obj_t * label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Hello, LVGL!");
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-    // ui_init();
+    ui_init();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1)

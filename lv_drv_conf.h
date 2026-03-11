@@ -285,7 +285,7 @@
 #  define ST7735S_XSTART      1
 #  define ST7735S_YSTART      2
 #  define ST7735S_ROTATION     90
-#  define ST7735S_BGR_ORDER    1
+#  define ST7735S_BGR_ORDER    0
 #endif
 
 /*------------------------------
