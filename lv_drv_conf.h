@@ -262,7 +262,7 @@
  *    ST7789
  *--------------*/
 #ifndef USE_ST7789
-#  define USE_ST7789          1
+#  define USE_ST7789          0
 #endif
 
 #if USE_ST7789
@@ -270,6 +270,22 @@
 #  define ST7789_VER_RES      240
 #  define ST7789_GAMMA         1
 #  define ST7789_TEARING       0
+#endif
+
+/*----------------
+ *    ST7735S
+ *--------------*/
+#ifndef USE_ST7735S
+#  define USE_ST7735S         1
+#endif
+
+#if USE_ST7735S
+#  define ST7735S_HOR_RES     160
+#  define ST7735S_VER_RES     128
+#  define ST7735S_XSTART      1
+#  define ST7735S_YSTART      2
+#  define ST7735S_ROTATION     90
+#  define ST7735S_BGR_ORDER    1
 #endif
 
 /*------------------------------
@@ -334,7 +350,7 @@
  *  ILI9341 240X320 TFT LCD
  *------------------------------------------------*/
 #ifndef USE_ILI9341
-#  define USE_ILI9341       1
+#  define USE_ILI9341       0
 #endif
 
 #if USE_ILI9341
@@ -390,21 +406,15 @@
 #endif
 
 #if USE_XPT2046
-#  define XPT2046_HOR_RES     320
-#  define XPT2046_VER_RES     240
+#  define XPT2046_HOR_RES     LV_HOR_RES
+#  define XPT2046_VER_RES     LV_VER_RES
 #  define XPT2046_X_MIN       200
 #  define XPT2046_Y_MIN       200
 #  define XPT2046_X_MAX       3800
 #  define XPT2046_Y_MAX       3800
 #  define XPT2046_AVG         4
 #  define XPT2046_X_INV       1
-
-# if defined(ILI9341)
-#  define XPT2046_Y_INV       1
-# elif defined(ST7789)
 #  define XPT2046_Y_INV       0
-# endif
-
 #  define XPT2046_XY_SWAP     0
 #endif
 

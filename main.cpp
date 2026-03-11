@@ -1,7 +1,6 @@
 #include "lvgl/lvgl.h"
 #include "lvgl/demos/lv_demos.h"
-#include "lv_drivers/display/ILI9341.h"
-#include "lv_drivers/display/ST7789.h"
+#include "lv_drivers/display/ST7735S.h"
 #include "lv_drivers/indev/XPT2046.h"
 #include <unistd.h>
 #include <pthread.h>
@@ -13,25 +12,9 @@
 #include "devices/tm7711/tm7711.h"
 #include "devices/power/power.h"
 
-#define DISP_BUF_SIZE (320 * 240 * 2)
-
-void display_init(void)
-{
-#if defined(ILI9341)
-    ili9341_init();
-#elif defined(ST7789)
-    st7789_init();
-#endif
-}
-
-void display_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
-{
-#if defined(ILI9341)
-    ili9341_flush(disp_drv, area, color_p);
-#elif defined(ST7789)
-    st7789_flush(disp_drv, area, color_p);
-#endif
-}
+#define LCD_HOR_RES 160
+#define LCD_VER_RES 128
+#define DISP_BUF_SIZE (LCD_HOR_RES * LCD_VER_RES * 2)
 
 int main(void)
 {
@@ -39,7 +22,7 @@ int main(void)
     lv_init();
 
     /*Linux frame buffer device init*/
-    display_init();
+    st7735s_init();
 
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -52,7 +35,9 @@ int main(void)
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.draw_buf = &disp_buf;
-    disp_drv.flush_cb = display_flush;
+    disp_drv.flush_cb = st7735s_flush;
+    disp_drv.hor_res = LCD_HOR_RES;
+    disp_drv.ver_res = LCD_VER_RES;
     lv_disp_drv_register(&disp_drv);
 
     xpt2046_init();
@@ -65,7 +50,10 @@ int main(void)
     lv_indev_drv_register(&indev_drv_1);
 
     /*Create a Demo*/
-    ui_init();
+    lv_obj_t * label = lv_label_create(lv_scr_act());
+    lv_label_set_text(label, "Hello, LVGL!");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    // ui_init();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1)

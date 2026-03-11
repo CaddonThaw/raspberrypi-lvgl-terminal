@@ -15,16 +15,6 @@ LDFLAGS ?= -lm -lwiringPi -lpthread $(shell pkg-config --libs opencv4) -liw
 
 BIN = demo
 
-DISPLAY ?= ST7789
-
-ifeq ($(DISPLAY), ILI9341)
-CFLAGS += -DILI9341
-CXXFLAGS += -DILI9341
-else
-CFLAGS += -DST7789 
-CXXFLAGS += -DST7789 
-endif
-
 #Collect the files to compile
 MAINSRC = ./main.cpp
 
