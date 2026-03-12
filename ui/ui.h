@@ -22,6 +22,10 @@ lv_obj_t *ui_wifi_screen_create(void);
  */
 void ui_main_screen_init(void);
 
+/* ── Power dialog ── */
+void ui_power_dialog_show(void);
+void ui_power_dialog_close(void);
+
 /* ── Runtime data update ── */
 void ui_main_set_time(const char *t);      /* e.g. "23:28"           */
 void ui_main_set_cpu(const char *v);       /* e.g. "42\xc2\xb0""C"  */

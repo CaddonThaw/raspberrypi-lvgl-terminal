@@ -14,6 +14,9 @@ extern "C" {
 void ui_event_camera_btn(lv_event_t *e);
 void ui_event_wifi_btn(lv_event_t *e);
 void ui_event_power_btn(lv_event_t *e);
+void ui_event_power_close_btn(lv_event_t *e);
+void ui_event_power_reboot_btn(lv_event_t *e);
+void ui_event_power_shutdown_btn(lv_event_t *e);
 
 /**
  * Back button callback (used by sub-screens).

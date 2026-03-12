@@ -61,6 +61,30 @@ void ui_event_wifi_btn(lv_event_t *e)
  * ════════════════════════════════════════════════════════ */
 void ui_event_power_btn(lv_event_t *e)
 {
-    /* TODO: add power action here */
-    (void)e;
+    /* Show the power dialog */
+    ui_power_dialog_show();
+}
+
+void ui_event_power_close_btn(lv_event_t *e)
+{
+    /* Close the power dialog */
+    ui_power_dialog_close();
+}
+
+void ui_event_power_reboot_btn(lv_event_t *e)
+{
+    /* Close the power dialog */
+    ui_power_dialog_close();
+
+    /* Reboot action */
+    power_reboot();
+}
+
+void ui_event_power_shutdown_btn(lv_event_t *e)
+{
+    /* Close the power dialog */
+    ui_power_dialog_close();
+
+    /* Shutdown action */
+    power_shutdown();
 }

@@ -83,6 +83,52 @@ static lv_obj_t *g_lbl_time;
 static lv_obj_t *g_lbl_cpu;
 static lv_obj_t *g_lbl_bat;
 static lv_obj_t *g_lbl_ip;
+static lv_obj_t *g_power_mask;
+static lv_obj_t *g_power_dialog;
+
+/* ═══════════════════════════════════════
+ *  Power dialog constants
+ * ═══════════════════════════════════════ */
+#define PWR_DLG_W          148
+#define PWR_DLG_H           60
+#define PWR_DLG_BTN_W       66
+#define PWR_DLG_BTN_H       26
+#define C_MODAL_MASK      lv_color_hex(0x000000)
+#define C_MODAL_PANEL     lv_color_hex(0xFFF8F8)
+#define C_MODAL_BORDER    lv_color_hex(0xD88A8A)
+
+static void power_dialog_delete_cb(lv_event_t *e)
+{
+    (void)e;
+    g_power_mask = NULL;
+    g_power_dialog = NULL;
+}
+
+static lv_obj_t *build_power_action_btn(lv_obj_t *parent,
+                                        const char *text,
+                                        lv_coord_t x,
+                                        lv_event_cb_t event_cb)
+{
+    lv_obj_t *btn = lv_btn_create(parent);
+    lv_obj_set_size(btn, PWR_DLG_BTN_W, PWR_DLG_BTN_H);
+    lv_obj_set_pos(btn, x, 28);
+    lv_obj_set_style_radius(btn, 6, 0);
+    lv_obj_set_style_bg_color(btn, C_BTN, 0);
+    lv_obj_set_style_bg_color(btn, C_BTN_PRESS, LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(btn, 0, 0);
+    lv_obj_set_style_shadow_width(btn, 0, 0);
+    lv_obj_set_style_pad_all(btn, 0, 0);
+    lv_obj_add_event_cb(btn, event_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t *label = lv_label_create(btn);
+    lv_label_set_text(label, text);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(label, C_TEXT, 0);
+    lv_obj_center(label);
+
+    return btn;
+}
 
 /* ════════════════════════════════════════════════════════
  *  build_back_button  (deeper colour scheme)
@@ -326,6 +372,79 @@ void ui_main_screen_init(void)
     build_bottom_panel(scr);
 
     lv_disp_load_scr(scr);
+}
+
+void ui_power_dialog_show(void)
+{
+    lv_obj_t *scr = lv_scr_act();
+
+    if (g_power_mask && lv_obj_is_valid(g_power_mask) && lv_obj_get_parent(g_power_mask) == scr) {
+        lv_obj_move_foreground(g_power_mask);
+        return;
+    }
+
+    g_power_mask = lv_obj_create(scr);
+    lv_obj_set_size(g_power_mask, SCR_W, SCR_H);
+    lv_obj_set_pos(g_power_mask, 0, 0);
+    lv_obj_set_style_bg_color(g_power_mask, C_MODAL_MASK, 0);
+    lv_obj_set_style_bg_opa(g_power_mask, LV_OPA_40, 0);
+    lv_obj_set_style_border_width(g_power_mask, 0, 0);
+    lv_obj_set_style_radius(g_power_mask, 0, 0);
+    lv_obj_set_style_pad_all(g_power_mask, 0, 0);
+    lv_obj_clear_flag(g_power_mask, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_event_cb(g_power_mask, power_dialog_delete_cb, LV_EVENT_DELETE, NULL);
+
+    g_power_dialog = lv_obj_create(g_power_mask);
+    lv_obj_set_size(g_power_dialog, PWR_DLG_W, PWR_DLG_H);
+    lv_obj_center(g_power_dialog);
+    lv_obj_set_style_bg_color(g_power_dialog, C_MODAL_PANEL, 0);
+    lv_obj_set_style_bg_opa(g_power_dialog, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(g_power_dialog, 1, 0);
+    lv_obj_set_style_border_color(g_power_dialog, C_MODAL_BORDER, 0);
+    lv_obj_set_style_radius(g_power_dialog, 10, 0);
+    lv_obj_set_style_shadow_width(g_power_dialog, 8, 0);
+    lv_obj_set_style_shadow_color(g_power_dialog, lv_color_hex(0xAA7070), 0);
+    lv_obj_set_style_shadow_opa(g_power_dialog, LV_OPA_30, 0);
+    lv_obj_set_style_pad_all(g_power_dialog, 0, 0);
+    lv_obj_clear_flag(g_power_dialog, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *close_btn = lv_btn_create(g_power_dialog);
+    lv_obj_set_size(close_btn, 22, 22);
+    lv_obj_set_pos(close_btn, 4, 4);
+    lv_obj_set_style_radius(close_btn, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(close_btn, C_BACK_BTN, 0);
+    lv_obj_set_style_bg_color(close_btn, C_BACK_BTN_PR, LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(close_btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(close_btn, 0, 0);
+    lv_obj_set_style_shadow_width(close_btn, 0, 0);
+    lv_obj_set_style_pad_all(close_btn, 0, 0);
+    lv_obj_add_event_cb(close_btn, ui_event_power_close_btn, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t *close_label = lv_label_create(close_btn);
+    lv_label_set_text(close_label, LV_SYMBOL_CLOSE);
+    lv_obj_set_style_text_font(close_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(close_label, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_text_align(close_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(close_label);
+
+    lv_obj_t *message = lv_label_create(g_power_dialog);
+    lv_label_set_text(message, "Do you want to reboot or shutdown?");
+    lv_obj_set_width(message, PWR_DLG_W - 38);
+    lv_label_set_long_mode(message, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_font(message, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(message, C_TEXT, 0);
+    lv_obj_set_style_text_align(message, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(message, LV_ALIGN_TOP_MID, 10, 7);
+
+    build_power_action_btn(g_power_dialog, "Reboot", 7, ui_event_power_reboot_btn);
+    build_power_action_btn(g_power_dialog, "Shutdown", 75, ui_event_power_shutdown_btn);
+}
+
+void ui_power_dialog_close(void)
+{
+    if (g_power_mask && lv_obj_is_valid(g_power_mask)) {
+        lv_obj_del(g_power_mask);
+    }
 }
 
 /* ════════════════════════════════════════════════════════

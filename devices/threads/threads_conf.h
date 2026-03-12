@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <stdbool.h>   
 #include <unistd.h>   
-// #include "devices/power/power.h"
+#include "devices/power/power.h"
 #include "devices/data/data.h"
 
 void data_create_thread(void);
