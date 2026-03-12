@@ -7,6 +7,9 @@ extern "C" {
 
 #include "lvgl/lvgl.h"
 
+/* —— UI init —— */
+void ui_init(void);
+
 /* ── Screen factory functions (used by ui_event.c) ── */
 lv_obj_t *ui_camera_screen_create(void);
 lv_obj_t *ui_wifi_screen_create(void);

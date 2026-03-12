@@ -6,6 +6,7 @@
 #include "ui_event.h"
 #include "ui.h"
 #include "lvgl/lvgl.h"
+#include "devices/threads/threads_conf.h"
 
 /* ════════════════════════════════════════════════════════
  *  Internal: load next screen, async-delete old screen
@@ -24,6 +25,9 @@ void ui_event_back_btn(lv_event_t *e)
     lv_obj_t *cur_scr = lv_scr_act();
     ui_main_screen_init();       /* rebuild main screen, calls lv_disp_load_scr */
     lv_obj_del_async(cur_scr);   /* free sub-screen RAM                         */
+
+    /* Restart the data thread */
+    data_create_thread();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -34,6 +38,9 @@ void ui_event_camera_btn(lv_event_t *e)
     lv_obj_t *old_scr = lv_scr_act();
     lv_obj_t *cam_scr = ui_camera_screen_create();
     screen_switch(cam_scr, old_scr);
+
+    /* Stop the data thread */
+    data_destroy_thread(); 
 }
 
 /* ════════════════════════════════════════════════════════
@@ -44,6 +51,9 @@ void ui_event_wifi_btn(lv_event_t *e)
     lv_obj_t *old_scr = lv_scr_act();
     lv_obj_t *wifi_scr = ui_wifi_screen_create();
     screen_switch(wifi_scr, old_scr);
+
+    /* Stop the data thread */
+    data_destroy_thread(); 
 }
 
 /* ════════════════════════════════════════════════════════

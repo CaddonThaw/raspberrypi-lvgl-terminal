@@ -17,6 +17,7 @@
 #include "ui.h"
 #include "ui_event.h"
 #include "lvgl/lvgl.h"
+#include "devices/threads/threads_conf.h"
 
 /* ═══════════════════════════════════════
  *  Colour Palette  (v7: deeper tones)
@@ -325,6 +326,17 @@ void ui_main_screen_init(void)
     build_bottom_panel(scr);
 
     lv_disp_load_scr(scr);
+}
+
+/* ════════════════════════════════════════════════════════
+ *  ui_init
+ * ════════════════════════════════════════════════════════ */
+void ui_init(void)
+{
+    ui_main_screen_init();
+
+    /* Start the data thread */
+    data_create_thread();
 }
 
 /* ════════════════════════════════════════════════════════
