@@ -5,8 +5,83 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
+#include <wiringPiI2C.h>
 #include "lvgl/lvgl.h"
 #include "ui/ui.h"
+
+namespace {
+
+    constexpr int INA219_ADDR = 0x42;
+    constexpr int REG_CONFIG = 0x00;
+    constexpr int REG_SHUNTVOLTAGE = 0x01;
+    constexpr int REG_BUSVOLTAGE = 0x02;
+    constexpr int REG_CALIBRATION = 0x05;
+    constexpr uint16_t INA219_CALIBRATION_32V_2A = 4096;
+    constexpr uint16_t INA219_CONFIG_32V_2A =
+        (0x01 << 13) | (0x03 << 11) | (0x0D << 7) | (0x0D << 3) | 0x07;
+
+    uint16_t byte_swap_u16(uint16_t value)
+    {
+        return static_cast<uint16_t>((value >> 8) | (value << 8));
+    }
+
+    bool ina219_write_u16(int fd, int reg, uint16_t value)
+    {
+        return wiringPiI2CWriteReg16(fd, reg, byte_swap_u16(value)) == 0;
+    }
+
+    bool ina219_read_u16(int fd, int reg, uint16_t *value)
+    {
+        int result = wiringPiI2CReadReg16(fd, reg);
+
+        if(result < 0)
+        {
+            return false;
+        }
+
+        *value = byte_swap_u16(static_cast<uint16_t>(result));
+        return true;
+    }
+
+    void get_battery_voltage(char *buffer, size_t buffer_size)
+    {
+        static int fd = -1;
+        uint16_t bus_voltage_raw;
+        float battery_voltage;
+
+        snprintf(buffer, buffer_size, "none");
+
+        if(fd < 0)
+        {
+            fd = wiringPiI2CSetup(INA219_ADDR);
+            if(fd < 0)
+            {
+                return;
+            }
+
+            if(!ina219_write_u16(fd, REG_CALIBRATION, INA219_CALIBRATION_32V_2A))
+            {
+                return;
+            }
+
+            if(!ina219_write_u16(fd, REG_CONFIG, INA219_CONFIG_32V_2A))
+            {
+                return;
+            }
+        }
+
+        if(!ina219_read_u16(fd, REG_BUSVOLTAGE, &bus_voltage_raw))
+        {
+            return;
+        }
+
+        battery_voltage = static_cast<float>(bus_voltage_raw >> 3) * 0.004f;
+
+        snprintf(buffer, buffer_size, "%.2fV", battery_voltage);
+    }
+
+}  // namespace
 
 void data_loop(void)
 {
@@ -16,6 +91,7 @@ void data_loop(void)
     char time_string[100];
     char cpu_temp_string[32];
     char ip_string[64];
+    char battery_string[32];
     FILE *fp;
     int milli_c;
     struct ifaddrs *ifaddr = NULL;
@@ -75,7 +151,10 @@ void data_loop(void)
         freeifaddrs(ifaddr);
     }
 
+    get_battery_voltage(battery_string, sizeof(battery_string));
+
     ui_main_set_time(time_string);
     ui_main_set_cpu(cpu_temp_string);
+    ui_main_set_battery(battery_string);
     ui_main_set_ip(ip_string);
 }
