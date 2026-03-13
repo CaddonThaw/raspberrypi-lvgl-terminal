@@ -26,6 +26,16 @@ void ui_main_screen_init(void);
 void ui_power_dialog_show(void);
 void ui_power_dialog_close(void);
 
+/* ── Wi-Fi dialog ── */
+void ui_wifi_qr_dialog_show(void);
+void ui_wifi_qr_dialog_close(void);
+void ui_wifi_loading_show(void);
+void ui_wifi_loading_close(void);
+void ui_wifi_set_scan_results(const char *options);
+void ui_wifi_submit_phone_password(const char *password);
+const char *ui_wifi_get_selected_ssid(void);
+const char *ui_wifi_get_submitted_password(void);
+
 /* ── Runtime data update ── */
 void ui_main_set_time(const char *t);      /* e.g. "23:28"           */
 void ui_main_set_cpu(const char *v);       /* e.g. "42\xc2\xb0""C"  */

@@ -28,6 +28,9 @@ void ui_event_back_btn(lv_event_t *e)
 
     /* Restart the data thread */
     data_create_thread();
+
+    /* Stop the Wi-Fi thread */
+    wifi_destroy_thread();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -54,6 +57,9 @@ void ui_event_wifi_btn(lv_event_t *e)
 
     /* Stop the data thread */
     data_destroy_thread(); 
+
+    /* Start Wi-Fi thread */
+    wifi_create_thread();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -87,4 +93,22 @@ void ui_event_power_shutdown_btn(lv_event_t *e)
 
     /* Shutdown action */
     power_shutdown();
+}
+
+void ui_event_wifi_refresh_btn(lv_event_t *e)
+{
+    /* Refresh Wi-Fi scan results */
+    wifi_isflush();
+}
+
+void ui_event_wifi_connect_btn(lv_event_t *e)
+{
+    /* Show the Wi-Fi QR code dialog */
+    ui_wifi_qr_dialog_show();
+}
+
+void ui_event_wifi_qr_cancel_btn(lv_event_t *e)
+{
+    /* Close the Wi-Fi QR dialog */
+    ui_wifi_qr_dialog_close();
 }
