@@ -30,11 +30,16 @@ void ui_power_dialog_close(void);
 void ui_wifi_qr_dialog_show(void);
 void ui_wifi_qr_dialog_close(void);
 void ui_wifi_qr_dialog_update(const char *qr_payload, const char *hint);
+void ui_wifi_request_qr_dialog_update(const char *qr_payload, const char *hint);
 void ui_wifi_loading_show(void);
 void ui_wifi_loading_close(void);
+void ui_wifi_request_loading_close(void);
 void ui_wifi_set_title(const char *text);
+void ui_wifi_request_set_title(const char *text);
 void ui_wifi_set_scan_results(const char *options);
+void ui_wifi_request_set_scan_results(const char *options);
 void ui_wifi_submit_phone_password(const char *password);
+void ui_wifi_request_submit_phone_password(const char *password);
 const char *ui_wifi_get_selected_ssid(void);
 const char *ui_wifi_get_submitted_password(void);
 

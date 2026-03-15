@@ -17,6 +17,7 @@
 #include "ui.h"
 #include "ui_event.h"
 #include "lvgl/lvgl.h"
+#include <pthread.h>
 #include <unistd.h>
 #include "lvgl/src/extra/libs/qrcode/lv_qrcode.h"
 #include "devices/threads/threads_conf.h"
@@ -98,10 +99,22 @@ static lv_obj_t *g_wifi_qr_obj;
 static lv_obj_t *g_wifi_qr_hint_label;
 static lv_obj_t *g_wifi_loading_mask;
 static lv_obj_t *g_wifi_loading_dialog;
+static lv_timer_t *g_wifi_ui_dispatch_timer;
 static char g_wifi_selected_ssid[64];
 static char g_wifi_submitted_password[64];
 static char g_wifi_portal_hint[160];
 static char g_wifi_roller_options[512] = "option1\noption2\noption3";
+static pthread_mutex_t g_wifi_ui_request_mutex = PTHREAD_MUTEX_INITIALIZER;
+static bool g_wifi_pending_qr_update = false;
+static bool g_wifi_pending_loading_close = false;
+static bool g_wifi_pending_title_update = false;
+static bool g_wifi_pending_scan_results_update = false;
+static bool g_wifi_pending_submit_password = false;
+static char g_wifi_pending_qr_payload[256];
+static char g_wifi_pending_qr_hint[160];
+static char g_wifi_pending_title[128];
+static char g_wifi_pending_scan_results[512];
+static char g_wifi_pending_password[64];
 
 /* ═══════════════════════════════════════
  *  Power dialog constants
@@ -236,6 +249,91 @@ static void wifi_apply_roller_options(void)
     lv_roller_set_options(g_wifi_roller, g_wifi_roller_options, LV_ROLLER_MODE_NORMAL);
     lv_roller_set_selected(g_wifi_roller, 0, LV_ANIM_OFF);
     g_wifi_selected_ssid[0] = '\0';
+}
+
+static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
+{
+    bool has_qr_update;
+    bool has_loading_close;
+    bool has_title_update;
+    bool has_scan_results_update;
+    bool has_submit_password;
+    char qr_payload[256];
+    char qr_hint[160];
+    char title[128];
+    char scan_results[512];
+    char password[64];
+
+    (void)timer;
+
+    qr_payload[0] = '\0';
+    qr_hint[0] = '\0';
+    title[0] = '\0';
+    scan_results[0] = '\0';
+    password[0] = '\0';
+
+    pthread_mutex_lock(&g_wifi_ui_request_mutex);
+    has_qr_update = g_wifi_pending_qr_update;
+    has_loading_close = g_wifi_pending_loading_close;
+    has_title_update = g_wifi_pending_title_update;
+    has_scan_results_update = g_wifi_pending_scan_results_update;
+    has_submit_password = g_wifi_pending_submit_password;
+
+    if(has_qr_update)
+    {
+        snprintf(qr_payload, sizeof(qr_payload), "%s", g_wifi_pending_qr_payload);
+        snprintf(qr_hint, sizeof(qr_hint), "%s", g_wifi_pending_qr_hint);
+        g_wifi_pending_qr_update = false;
+    }
+
+    if(has_loading_close)
+    {
+        g_wifi_pending_loading_close = false;
+    }
+
+    if(has_title_update)
+    {
+        snprintf(title, sizeof(title), "%s", g_wifi_pending_title);
+        g_wifi_pending_title_update = false;
+    }
+
+    if(has_scan_results_update)
+    {
+        snprintf(scan_results, sizeof(scan_results), "%s", g_wifi_pending_scan_results);
+        g_wifi_pending_scan_results_update = false;
+    }
+
+    if(has_submit_password)
+    {
+        snprintf(password, sizeof(password), "%s", g_wifi_pending_password);
+        g_wifi_pending_submit_password = false;
+    }
+    pthread_mutex_unlock(&g_wifi_ui_request_mutex);
+
+    if(has_title_update)
+    {
+        ui_wifi_set_title(title);
+    }
+
+    if(has_scan_results_update)
+    {
+        ui_wifi_set_scan_results(scan_results);
+    }
+
+    if(has_qr_update)
+    {
+        ui_wifi_qr_dialog_update(qr_payload, qr_hint);
+    }
+
+    if(has_submit_password)
+    {
+        ui_wifi_submit_phone_password(password);
+    }
+
+    if(has_loading_close)
+    {
+        ui_wifi_loading_close();
+    }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -457,8 +555,7 @@ void ui_wifi_qr_dialog_update(const char *qr_payload, const char *hint)
     if(qr_payload && qr_payload[0] != '\0')
     {
         lv_qrcode_update(g_wifi_qr_obj, qr_payload, strlen(qr_payload));
-        usleep(100000);
-        lv_qrcode_update(g_wifi_qr_obj, qr_payload, strlen(qr_payload));
+        lv_obj_invalidate(g_wifi_qr_obj);
         printf("[wifi] qr payload: %s\n", qr_payload);
     }
 
@@ -467,6 +564,21 @@ void ui_wifi_qr_dialog_update(const char *qr_payload, const char *hint)
         snprintf(g_wifi_portal_hint, sizeof(g_wifi_portal_hint), "%s", hint);
         lv_label_set_text(g_wifi_qr_hint_label, g_wifi_portal_hint);
     }
+}
+
+void ui_wifi_request_qr_dialog_update(const char *qr_payload, const char *hint)
+{
+    pthread_mutex_lock(&g_wifi_ui_request_mutex);
+    snprintf(g_wifi_pending_qr_payload,
+             sizeof(g_wifi_pending_qr_payload),
+             "%s",
+             qr_payload ? qr_payload : "");
+    snprintf(g_wifi_pending_qr_hint,
+             sizeof(g_wifi_pending_qr_hint),
+             "%s",
+             hint ? hint : "");
+    g_wifi_pending_qr_update = true;
+    pthread_mutex_unlock(&g_wifi_ui_request_mutex);
 }
 
 void ui_wifi_qr_dialog_close(void)
@@ -552,7 +664,7 @@ void ui_wifi_loading_show(void)
     lv_obj_set_style_arc_width(spinner, 3, LV_PART_INDICATOR);
 
     lv_obj_t *title = lv_label_create(g_wifi_loading_dialog);
-    lv_label_set_text(title, "Connecting");
+    lv_label_set_text(title, "Connected");
     lv_obj_set_style_text_font(title, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(title, C_ACCENT, 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 10, 8);
@@ -572,6 +684,46 @@ void ui_wifi_loading_close(void)
     {
         lv_obj_del(g_wifi_loading_mask);
     }
+}
+
+void ui_wifi_request_loading_close(void)
+{
+    pthread_mutex_lock(&g_wifi_ui_request_mutex);
+    g_wifi_pending_loading_close = true;
+    pthread_mutex_unlock(&g_wifi_ui_request_mutex);
+}
+
+void ui_wifi_request_set_title(const char *text)
+{
+    pthread_mutex_lock(&g_wifi_ui_request_mutex);
+    snprintf(g_wifi_pending_title,
+             sizeof(g_wifi_pending_title),
+             "%s",
+             text ? text : "Disconnected");
+    g_wifi_pending_title_update = true;
+    pthread_mutex_unlock(&g_wifi_ui_request_mutex);
+}
+
+void ui_wifi_request_set_scan_results(const char *options)
+{
+    pthread_mutex_lock(&g_wifi_ui_request_mutex);
+    snprintf(g_wifi_pending_scan_results,
+             sizeof(g_wifi_pending_scan_results),
+             "%s",
+             options ? options : "No Wi-Fi Found");
+    g_wifi_pending_scan_results_update = true;
+    pthread_mutex_unlock(&g_wifi_ui_request_mutex);
+}
+
+void ui_wifi_request_submit_phone_password(const char *password)
+{
+    pthread_mutex_lock(&g_wifi_ui_request_mutex);
+    snprintf(g_wifi_pending_password,
+             sizeof(g_wifi_pending_password),
+             "%s",
+             password ? password : "");
+    g_wifi_pending_submit_password = true;
+    pthread_mutex_unlock(&g_wifi_ui_request_mutex);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -830,6 +982,11 @@ void ui_power_dialog_close(void)
 void ui_init(void)
 {
     ui_main_screen_init();
+
+    if(g_wifi_ui_dispatch_timer == NULL)
+    {
+        g_wifi_ui_dispatch_timer = lv_timer_create(wifi_ui_dispatch_timer_cb, 20, NULL);
+    }
 
     /* Start the data thread */
     data_create_thread();

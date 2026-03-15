@@ -194,7 +194,7 @@ void wifi_update_ui_status_title(void)
     char status_text[128];
 
     wifi_build_status_text(status_text, sizeof(status_text));
-    ui_wifi_set_title(status_text);
+    ui_wifi_request_set_title(status_text);
 }
 
 void html_escape(const char *src, char *dst, size_t dst_size)
@@ -446,7 +446,7 @@ void handle_http_request(int client_fd)
         wifi_get_ssid(ssid);
         wifi_get_pass(password);
         wifi_isconnect();
-        ui_wifi_submit_phone_password(password);
+        ui_wifi_request_submit_phone_password(password);
         send_submit_result(client_fd, ssid);
         return;
     }
@@ -664,13 +664,13 @@ int wifi_scan(void)
 
     if(sock < 0) 
     {
-        ui_wifi_set_scan_results( "无法打开无线socket");
+        ui_wifi_request_set_scan_results("无法打开无线socket");
         return -1;
     }
 
     /****** Scan nearby WiFi ******/
-    ui_wifi_set_scan_results("正在检查当前连接...");
-    ui_wifi_set_scan_results("正在扫描附近WiFi...");
+    ui_wifi_request_set_scan_results("正在检查当前连接...");
+    ui_wifi_request_set_scan_results("正在扫描附近WiFi...");
 
     char buffer[4096] = {0};         // Buffer to store WiFi list
     wireless_scan_head scan_results; // Scan results linked list head
@@ -679,7 +679,7 @@ int wifi_scan(void)
     if(iw_scan(sock, (char *)"wlan0", 30, &scan_results) < 0) 
     {
         close(sock);
-        ui_wifi_set_scan_results("无法连接...");
+        ui_wifi_request_set_scan_results("无法连接...");
         return -1;
     }
 
@@ -723,11 +723,11 @@ int wifi_scan(void)
     // Update UI controls
     if(buffer[0] == '\0')
     {
-        ui_wifi_set_scan_results("No Wi-Fi Found");
+        ui_wifi_request_set_scan_results("No Wi-Fi Found");
     }
     else
     {
-        ui_wifi_set_scan_results(buffer);
+        ui_wifi_request_set_scan_results(buffer);
     }
     
     return 0;
