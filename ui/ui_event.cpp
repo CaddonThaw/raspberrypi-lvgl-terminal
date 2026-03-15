@@ -108,13 +108,16 @@ void ui_event_wifi_connect_btn(lv_event_t *e)
 {
     /* Show the Wi-Fi QR code dialog */
     ui_wifi_qr_dialog_show();
+
+    /* Ask Wi-Fi thread to prepare portal */
+    wifi_isportalopen();
 }
 
 void ui_event_wifi_qr_cancel_btn(lv_event_t *e)
 {
-    /* Stop the phone portal */
-    wifi_stop_phone_portal();
-
     /* Close the Wi-Fi QR dialog */
     ui_wifi_qr_dialog_close();
+
+    /* Ask Wi-Fi thread to stop portal */
+    wifi_isportalcancel();
 }

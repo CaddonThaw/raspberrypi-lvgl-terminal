@@ -20,7 +20,7 @@ constexpr int WIFI_PORTAL_PORT = 8080;
 constexpr size_t WIFI_HTTP_BUFFER_SIZE = 2048;
 constexpr const char *WIFI_PORTAL_IFNAME = "wlan0";
 constexpr const char *WIFI_PORTAL_CONN_NAME = "PiTerminalHotspot";
-constexpr const char *WIFI_PORTAL_AP_SSID = "PiTerminal-Setup";
+constexpr const char *WIFI_PORTAL_AP_SSID = "RaspberryPi-Terminal";
 constexpr const char *WIFI_PORTAL_AP_PASSWORD = "12345678";
 constexpr const char *WIFI_STATION_IP = "192.168.5.4";
 constexpr const char *WIFI_PORTAL_HOTSPOT_URL = "http://10.42.0.1:8080";
@@ -811,11 +811,11 @@ void wifi_build_status_text(char *buffer, size_t buffer_size)
 
     if(wifi_get_connected_ssid(connected_ssid, sizeof(connected_ssid)))
     {
-        snprintf(buffer, buffer_size, "Connecting %s", connected_ssid);
+        snprintf(buffer, buffer_size, "Connected %s", connected_ssid);
         return;
     }
 
-    snprintf(buffer, buffer_size, "Disconnecting");
+    snprintf(buffer, buffer_size, "DisConnected");
 }
 
 void wifi_build_phone_entry_url(const char *ssid, char *buffer, size_t buffer_size)
@@ -888,7 +888,7 @@ int wifi_prepare_phone_portal(const char *ssid,
         snprintf(portal_hint,
                  portal_hint_size,
                  "Connect phone to %s and open %s",
-                 current_ip,
+                 ssid,
                  portal_url);
         printf("[wifi] using station portal: %s\n", portal_url);
         return 1;

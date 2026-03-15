@@ -23,9 +23,8 @@ void data_destroy_thread(void)
 
 void* data_thread(void* arg) 
 {
-    while(1) 
+    while(data_is_running) 
     {
-        if(!data_is_running)break;
         data_loop();
         usleep(100000); 
     }

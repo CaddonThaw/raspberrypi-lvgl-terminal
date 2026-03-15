@@ -17,6 +17,7 @@
 #include "ui.h"
 #include "ui_event.h"
 #include "lvgl/lvgl.h"
+#include <unistd.h>
 #include "lvgl/src/extra/libs/qrcode/lv_qrcode.h"
 #include "devices/threads/threads_conf.h"
 
@@ -129,8 +130,8 @@ static char g_wifi_roller_options[512] = "option1\noption2\noption3";
 #define WIFI_QR_DLG_W      148
 #define WIFI_QR_DLG_H      124
 #define WIFI_QR_SIZE        52
-#define WIFI_QR_BTN_W       80
-#define WIFI_QR_BTN_H       18
+#define WIFI_QR_BTN_W       65
+#define WIFI_QR_BTN_H       20
 
 #define WIFI_LOADING_W     118
 #define WIFI_LOADING_H      58
@@ -235,15 +236,6 @@ static void wifi_apply_roller_options(void)
     lv_roller_set_options(g_wifi_roller, g_wifi_roller_options, LV_ROLLER_MODE_NORMAL);
     lv_roller_set_selected(g_wifi_roller, 0, LV_ANIM_OFF);
     g_wifi_selected_ssid[0] = '\0';
-}
-
-static void wifi_build_qr_payload(char *buffer, size_t buffer_size)
-{
-    wifi_prepare_phone_portal(g_wifi_selected_ssid[0] != '\0' ? g_wifi_selected_ssid : "option1",
-                              buffer,
-                              buffer_size,
-                              g_wifi_portal_hint,
-                              sizeof(g_wifi_portal_hint));
 }
 
 /* ════════════════════════════════════════════════════════
@@ -376,7 +368,6 @@ void ui_wifi_qr_dialog_show(void)
 {
     lv_obj_t *scr = lv_scr_act();
     char selected_ssid[64];
-    char qr_payload[128];
 
     if(g_wifi_mask && lv_obj_is_valid(g_wifi_mask) && lv_obj_get_parent(g_wifi_mask) == scr)
     {
@@ -386,8 +377,7 @@ void ui_wifi_qr_dialog_show(void)
 
     wifi_get_selected_ssid(selected_ssid, sizeof(selected_ssid));
     snprintf(g_wifi_selected_ssid, sizeof(g_wifi_selected_ssid), "%s", selected_ssid);
-    wifi_build_qr_payload(qr_payload, sizeof(qr_payload));
-    printf("[wifi] qr payload: %s\n", qr_payload);
+    snprintf(g_wifi_portal_hint, sizeof(g_wifi_portal_hint), "%s", "Preparing portal...");
 
     g_wifi_mask = lv_obj_create(scr);
     lv_obj_set_size(g_wifi_mask, SCR_W, SCR_H);
@@ -433,7 +423,7 @@ void ui_wifi_qr_dialog_show(void)
                                      WIFI_QR_SIZE,
                                      lv_color_hex(0x1A1A1A),
                                      lv_color_hex(0xFFFFFF));
-    lv_qrcode_update(g_wifi_qr_obj, qr_payload, strlen(qr_payload));
+    lv_qrcode_update(g_wifi_qr_obj, "Preparing", strlen("Preparing"));
     lv_obj_align(g_wifi_qr_obj, LV_ALIGN_TOP_MID, 0, 32);
 
     g_wifi_qr_hint_label = lv_label_create(g_wifi_qr_dialog);
@@ -444,15 +434,39 @@ void ui_wifi_qr_dialog_show(void)
     lv_obj_set_style_text_font(g_wifi_qr_hint_label, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(g_wifi_qr_hint_label, C_TEXT, 0);
     lv_obj_set_style_text_align(g_wifi_qr_hint_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(g_wifi_qr_hint_label, LV_ALIGN_TOP_MID, 0, 86);
+    lv_obj_align(g_wifi_qr_hint_label, LV_ALIGN_TOP_MID, 0, 83);
 
     build_modal_action_btn(g_wifi_qr_dialog,
                            "Cancel",
                            (WIFI_QR_DLG_W - WIFI_QR_BTN_W) / 2,
-                           104,
+                           99,
                            WIFI_QR_BTN_W,
                            WIFI_QR_BTN_H,
                            ui_event_wifi_qr_cancel_btn);
+}
+
+void ui_wifi_qr_dialog_update(const char *qr_payload, const char *hint)
+{
+    if(!g_wifi_qr_dialog || !lv_obj_is_valid(g_wifi_qr_dialog) ||
+       !g_wifi_qr_obj || !lv_obj_is_valid(g_wifi_qr_obj) ||
+       !g_wifi_qr_hint_label || !lv_obj_is_valid(g_wifi_qr_hint_label))
+    {
+        return;
+    }
+
+    if(qr_payload && qr_payload[0] != '\0')
+    {
+        lv_qrcode_update(g_wifi_qr_obj, qr_payload, strlen(qr_payload));
+        usleep(100000);
+        lv_qrcode_update(g_wifi_qr_obj, qr_payload, strlen(qr_payload));
+        printf("[wifi] qr payload: %s\n", qr_payload);
+    }
+
+    if(hint && hint[0] != '\0')
+    {
+        snprintf(g_wifi_portal_hint, sizeof(g_wifi_portal_hint), "%s", hint);
+        lv_label_set_text(g_wifi_qr_hint_label, g_wifi_portal_hint);
+    }
 }
 
 void ui_wifi_qr_dialog_close(void)

@@ -29,6 +29,7 @@ void ui_power_dialog_close(void);
 /* ── Wi-Fi dialog ── */
 void ui_wifi_qr_dialog_show(void);
 void ui_wifi_qr_dialog_close(void);
+void ui_wifi_qr_dialog_update(const char *qr_payload, const char *hint);
 void ui_wifi_loading_show(void);
 void ui_wifi_loading_close(void);
 void ui_wifi_set_title(const char *text);

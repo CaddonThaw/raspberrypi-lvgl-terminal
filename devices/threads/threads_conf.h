@@ -17,6 +17,8 @@ void wifi_destroy_thread(void);
 void* wifi_thread(void* arg);
 void wifi_isflush(void);
 void wifi_isconnect(void);
+void wifi_isportalopen(void);
+void wifi_isportalcancel(void);
 void wifi_get_ssid(char *ssid);
 void wifi_get_pass(const char *pass);
 void wifi_get_clear(void);
