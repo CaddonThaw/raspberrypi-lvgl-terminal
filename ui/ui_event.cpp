@@ -24,6 +24,7 @@ void ui_event_back_btn(lv_event_t *e)
 {
     /* Stop the Wi-Fi thread */
     wifi_destroy_thread();
+    camera_destroy_thread();
 
     /* Create main screen */
     lv_obj_t *cur_scr = lv_scr_act();
@@ -46,6 +47,9 @@ void ui_event_camera_btn(lv_event_t *e)
     lv_obj_t *old_scr = lv_scr_act();
     lv_obj_t *cam_scr = ui_camera_screen_create();
     screen_switch(cam_scr, old_scr);
+
+    /* Start camera thread */
+    camera_create_thread();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -120,4 +124,22 @@ void ui_event_wifi_qr_cancel_btn(lv_event_t *e)
 
     /* Ask Wi-Fi thread to stop portal */
     wifi_isportalcancel();
+}
+
+void ui_event_camera_refresh_btn(lv_event_t *e)
+{
+    camera_isrefresh();
+}
+
+void ui_event_camera_run_btn(lv_event_t *e)
+{
+    camera_get_script(ui_camera_get_selected_script());
+    ui_camera_viewer_show();
+    camera_isrun();
+}
+
+void ui_event_camera_close_btn(lv_event_t *e)
+{
+    ui_camera_viewer_close();
+    camera_isstop();
 }

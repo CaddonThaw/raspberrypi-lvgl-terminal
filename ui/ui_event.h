@@ -20,6 +20,9 @@ void ui_event_power_shutdown_btn(lv_event_t *e);
 void ui_event_wifi_refresh_btn(lv_event_t *e);
 void ui_event_wifi_connect_btn(lv_event_t *e);
 void ui_event_wifi_qr_cancel_btn(lv_event_t *e);
+void ui_event_camera_refresh_btn(lv_event_t *e);
+void ui_event_camera_run_btn(lv_event_t *e);
+void ui_event_camera_close_btn(lv_event_t *e);
 
 /**
  * Back button callback (used by sub-screens).

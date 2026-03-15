@@ -17,6 +17,7 @@
 #include "ui.h"
 #include "ui_event.h"
 #include "lvgl/lvgl.h"
+#include <cstring>
 #include <pthread.h>
 #include <unistd.h>
 #include "lvgl/src/extra/libs/qrcode/lv_qrcode.h"
@@ -90,6 +91,11 @@ static lv_obj_t *g_lbl_bat;
 static lv_obj_t *g_lbl_ip;
 static lv_obj_t *g_power_mask;
 static lv_obj_t *g_power_dialog;
+static lv_obj_t *g_camera_title;
+static lv_obj_t *g_camera_roller;
+static lv_obj_t *g_camera_viewer;
+static lv_obj_t *g_camera_canvas;
+static lv_obj_t *g_camera_error_label;
 static lv_obj_t *g_wifi_roller;
 static lv_obj_t *g_wifi_title;
 static lv_obj_t *g_wifi_mask;
@@ -100,11 +106,25 @@ static lv_obj_t *g_wifi_qr_hint_label;
 static lv_obj_t *g_wifi_loading_mask;
 static lv_obj_t *g_wifi_loading_dialog;
 static lv_timer_t *g_wifi_ui_dispatch_timer;
+static lv_color_t g_camera_canvas_buffer[SCR_W * SCR_H];
+static char g_camera_script_options[512] = "Loading...";
+static char g_camera_selected_script[128];
 static char g_wifi_selected_ssid[64];
 static char g_wifi_submitted_password[64];
 static char g_wifi_portal_hint[160];
 static char g_wifi_roller_options[512] = "option1\noption2\noption3";
+static pthread_mutex_t g_camera_ui_request_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_wifi_ui_request_mutex = PTHREAD_MUTEX_INITIALIZER;
+static bool g_camera_pending_title_update = false;
+static bool g_camera_pending_script_list_update = false;
+static bool g_camera_pending_frame_update = false;
+static bool g_camera_pending_error_update = false;
+static bool g_camera_pending_viewer_close = false;
+static char g_camera_pending_title[256];
+static char g_camera_pending_script_list[512];
+static char g_camera_pending_error[512];
+static size_t g_camera_pending_frame_size = 0;
+static lv_color_t g_camera_pending_frame[SCR_W * SCR_H];
 static bool g_wifi_pending_qr_update = false;
 static bool g_wifi_pending_loading_close = false;
 static bool g_wifi_pending_title_update = false;
@@ -149,6 +169,24 @@ static char g_wifi_pending_password[64];
 #define WIFI_LOADING_W     118
 #define WIFI_LOADING_H      58
 
+#define CAMERA_TITLE_Y       6
+#define CAMERA_TITLE_W     115
+#define CAMERA_ROLLER_X     10
+#define CAMERA_ROLLER_Y     25
+#define CAMERA_ROLLER_W    140
+#define CAMERA_ROLLER_H     42
+#define CAMERA_BTN_W        60
+#define CAMERA_BTN_H        25
+#define CAMERA_BTN_Y        95
+
+static void camera_viewer_delete_cb(lv_event_t *e)
+{
+    (void)e;
+    g_camera_viewer = NULL;
+    g_camera_canvas = NULL;
+    g_camera_error_label = NULL;
+}
+
 static void wifi_modal_delete_cb(lv_event_t *e)
 {
     (void)e;
@@ -171,6 +209,32 @@ static void power_dialog_delete_cb(lv_event_t *e)
     (void)e;
     g_power_mask = NULL;
     g_power_dialog = NULL;
+}
+
+static void camera_get_selected_script(char *buffer, size_t buffer_size)
+{
+    if(!g_camera_roller || !lv_obj_is_valid(g_camera_roller))
+    {
+        if(buffer != NULL && buffer_size > 0)
+        {
+            buffer[0] = '\0';
+        }
+        return;
+    }
+
+    lv_roller_get_selected_str(g_camera_roller, buffer, buffer_size);
+}
+
+static void camera_apply_roller_options(void)
+{
+    if(!g_camera_roller || !lv_obj_is_valid(g_camera_roller))
+    {
+        return;
+    }
+
+    lv_roller_set_options(g_camera_roller, g_camera_script_options, LV_ROLLER_MODE_NORMAL);
+    lv_roller_set_selected(g_camera_roller, 0, LV_ANIM_OFF);
+    g_camera_selected_script[0] = '\0';
 }
 
 static lv_obj_t *build_power_action_btn(lv_obj_t *parent,
@@ -253,11 +317,21 @@ static void wifi_apply_roller_options(void)
 
 static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
 {
+    bool has_camera_title_update;
+    bool has_camera_script_list_update;
+    bool has_camera_frame_update;
+    bool has_camera_error_update;
+    bool has_camera_viewer_close;
     bool has_qr_update;
     bool has_loading_close;
     bool has_title_update;
     bool has_scan_results_update;
     bool has_submit_password;
+    static lv_color_t camera_frame_copy[SCR_W * SCR_H];
+    char camera_title[256];
+    char camera_script_list[512];
+    char camera_error[512];
+    size_t camera_frame_size;
     char qr_payload[256];
     char qr_hint[160];
     char title[128];
@@ -271,6 +345,49 @@ static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
     title[0] = '\0';
     scan_results[0] = '\0';
     password[0] = '\0';
+    camera_title[0] = '\0';
+    camera_script_list[0] = '\0';
+    camera_error[0] = '\0';
+    camera_frame_size = 0;
+
+    pthread_mutex_lock(&g_camera_ui_request_mutex);
+    has_camera_title_update = g_camera_pending_title_update;
+    has_camera_script_list_update = g_camera_pending_script_list_update;
+    has_camera_frame_update = g_camera_pending_frame_update;
+    has_camera_error_update = g_camera_pending_error_update;
+    has_camera_viewer_close = g_camera_pending_viewer_close;
+
+    if(has_camera_title_update)
+    {
+        snprintf(camera_title, sizeof(camera_title), "%s", g_camera_pending_title);
+        g_camera_pending_title_update = false;
+    }
+
+    if(has_camera_script_list_update)
+    {
+        snprintf(camera_script_list, sizeof(camera_script_list), "%s", g_camera_pending_script_list);
+        g_camera_pending_script_list_update = false;
+    }
+
+    if(has_camera_frame_update)
+    {
+        camera_frame_size = g_camera_pending_frame_size;
+        memcpy(camera_frame_copy, g_camera_pending_frame, camera_frame_size);
+        g_camera_pending_frame_update = false;
+        g_camera_pending_frame_size = 0;
+    }
+
+    if(has_camera_error_update)
+    {
+        snprintf(camera_error, sizeof(camera_error), "%s", g_camera_pending_error);
+        g_camera_pending_error_update = false;
+    }
+
+    if(has_camera_viewer_close)
+    {
+        g_camera_pending_viewer_close = false;
+    }
+    pthread_mutex_unlock(&g_camera_ui_request_mutex);
 
     pthread_mutex_lock(&g_wifi_ui_request_mutex);
     has_qr_update = g_wifi_pending_qr_update;
@@ -313,6 +430,31 @@ static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
     if(has_title_update)
     {
         ui_wifi_set_title(title);
+    }
+
+    if(has_camera_title_update)
+    {
+        ui_camera_set_title(camera_title);
+    }
+
+    if(has_camera_script_list_update)
+    {
+        ui_camera_set_script_list(camera_script_list);
+    }
+
+    if(has_camera_frame_update)
+    {
+        ui_camera_update_frame(camera_frame_copy, camera_frame_size);
+    }
+
+    if(has_camera_error_update)
+    {
+        ui_camera_show_error(camera_error);
+    }
+
+    if(has_camera_viewer_close)
+    {
+        ui_camera_viewer_close();
     }
 
     if(has_scan_results_update)
@@ -365,20 +507,253 @@ static void build_back_button(lv_obj_t *parent)
 lv_obj_t *ui_camera_screen_create(void)
 {
     lv_obj_t *scr = lv_obj_create(NULL);
+    char scripts_path[256];
+
     lv_obj_set_style_bg_color(scr, C_BG, 0);
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
     lv_obj_clear_flag(scr, LV_OBJ_FLAG_SCROLLABLE);
 
     build_back_button(scr);
 
-    lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, "Camera");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(title, C_ACCENT, 0);
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 6);
+    snprintf(scripts_path, sizeof(scripts_path), "%s", camera_get_scripts_path());
 
-    /* ── user adds widgets here ── */
+    g_camera_title = lv_label_create(scr);
+    lv_label_set_text(g_camera_title, scripts_path);
+    lv_obj_set_width(g_camera_title, CAMERA_TITLE_W);
+    lv_label_set_long_mode(g_camera_title, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_font(g_camera_title, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(g_camera_title, C_ACCENT, 0);
+    lv_obj_set_style_text_align(g_camera_title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(g_camera_title, LV_ALIGN_TOP_MID, 8, CAMERA_TITLE_Y + 1);
+
+    g_camera_roller = lv_roller_create(scr);
+    lv_obj_set_size(g_camera_roller, CAMERA_ROLLER_W, CAMERA_ROLLER_H);
+    lv_obj_set_pos(g_camera_roller, CAMERA_ROLLER_X, CAMERA_ROLLER_Y);
+    lv_roller_set_options(g_camera_roller, g_camera_script_options, LV_ROLLER_MODE_NORMAL);
+    lv_roller_set_visible_row_count(g_camera_roller, 3);
+    lv_obj_set_style_radius(g_camera_roller, 8, 0);
+    lv_obj_set_style_bg_color(g_camera_roller, C_MODAL_PANEL, 0);
+    lv_obj_set_style_bg_opa(g_camera_roller, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(g_camera_roller, C_MODAL_BORDER, 0);
+    lv_obj_set_style_border_width(g_camera_roller, 1, 0);
+    lv_obj_set_style_text_color(g_camera_roller, C_TEXT, 0);
+    lv_obj_set_style_text_font(g_camera_roller, &ui_font_AlimamaShuHeiTi, 0);
+    lv_obj_set_style_text_color(g_camera_roller, C_ACCENT, LV_PART_SELECTED);
+    lv_obj_set_style_text_font(g_camera_roller, &ui_font_AlimamaShuHeiTi, LV_PART_SELECTED);
+    lv_obj_set_style_bg_color(g_camera_roller, lv_color_hex(0xFFD6D6), LV_PART_SELECTED);
+
+    build_modal_action_btn(scr,
+                           "Fresh",
+                           14,
+                           CAMERA_BTN_Y,
+                           CAMERA_BTN_W,
+                           CAMERA_BTN_H,
+                           ui_event_camera_refresh_btn);
+    build_modal_action_btn(scr,
+                           "Run",
+                           86,
+                           CAMERA_BTN_Y,
+                           CAMERA_BTN_W,
+                           CAMERA_BTN_H,
+                           ui_event_camera_run_btn);
+
     return scr;
+}
+
+void ui_camera_set_title(const char *text)
+{
+    if(!g_camera_title || !lv_obj_is_valid(g_camera_title))
+    {
+        return;
+    }
+
+    lv_label_set_text(g_camera_title, (text && text[0] != '\0') ? text : camera_get_scripts_path());
+}
+
+void ui_camera_request_set_title(const char *text)
+{
+    pthread_mutex_lock(&g_camera_ui_request_mutex);
+    snprintf(g_camera_pending_title,
+             sizeof(g_camera_pending_title),
+             "%s",
+             text ? text : camera_get_scripts_path());
+    g_camera_pending_title_update = true;
+    pthread_mutex_unlock(&g_camera_ui_request_mutex);
+}
+
+void ui_camera_set_script_list(const char *options)
+{
+    if(options && options[0] != '\0')
+    {
+        snprintf(g_camera_script_options, sizeof(g_camera_script_options), "%s", options);
+    }
+    else
+    {
+        snprintf(g_camera_script_options, sizeof(g_camera_script_options), "%s", "No Python Files");
+    }
+
+    camera_apply_roller_options();
+}
+
+void ui_camera_request_set_script_list(const char *options)
+{
+    pthread_mutex_lock(&g_camera_ui_request_mutex);
+    snprintf(g_camera_pending_script_list,
+             sizeof(g_camera_pending_script_list),
+             "%s",
+             options ? options : "No Python Files");
+    g_camera_pending_script_list_update = true;
+    pthread_mutex_unlock(&g_camera_ui_request_mutex);
+}
+
+const char *ui_camera_get_selected_script(void)
+{
+    if(g_camera_selected_script[0] == '\0')
+    {
+        camera_get_selected_script(g_camera_selected_script, sizeof(g_camera_selected_script));
+    }
+
+    return g_camera_selected_script;
+}
+
+void ui_camera_viewer_show(void)
+{
+    lv_obj_t *scr = lv_scr_act();
+
+    if(g_camera_viewer && lv_obj_is_valid(g_camera_viewer) && lv_obj_get_parent(g_camera_viewer) == scr)
+    {
+        lv_obj_move_foreground(g_camera_viewer);
+        return;
+    }
+
+    g_camera_viewer = lv_obj_create(scr);
+    lv_obj_set_size(g_camera_viewer, SCR_W, SCR_H);
+    lv_obj_set_pos(g_camera_viewer, 0, 0);
+    lv_obj_set_style_bg_color(g_camera_viewer, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_opa(g_camera_viewer, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(g_camera_viewer, 0, 0);
+    lv_obj_set_style_radius(g_camera_viewer, 0, 0);
+    lv_obj_set_style_pad_all(g_camera_viewer, 0, 0);
+    lv_obj_clear_flag(g_camera_viewer, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_event_cb(g_camera_viewer, camera_viewer_delete_cb, LV_EVENT_DELETE, NULL);
+
+    g_camera_canvas = lv_canvas_create(g_camera_viewer);
+    lv_canvas_set_buffer(g_camera_canvas,
+                         g_camera_canvas_buffer,
+                         SCR_W,
+                         SCR_H,
+                         LV_IMG_CF_TRUE_COLOR);
+    lv_obj_set_size(g_camera_canvas, SCR_W, SCR_H);
+    lv_obj_set_pos(g_camera_canvas, 0, 0);
+    lv_canvas_fill_bg(g_camera_canvas, lv_color_hex(0x000000), LV_OPA_COVER);
+
+    g_camera_error_label = lv_label_create(g_camera_viewer);
+    lv_label_set_text(g_camera_error_label, "Starting...");
+    lv_obj_set_width(g_camera_error_label, SCR_W - 16);
+    lv_label_set_long_mode(g_camera_error_label, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(g_camera_error_label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(g_camera_error_label, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_text_align(g_camera_error_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(g_camera_error_label);
+
+    lv_obj_t *close_btn = lv_btn_create(g_camera_viewer);
+    lv_obj_set_size(close_btn, 22, 22);
+    lv_obj_set_pos(close_btn, 4, 4);
+    lv_obj_set_style_radius(close_btn, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(close_btn, C_BACK_BTN, 0);
+    lv_obj_set_style_bg_color(close_btn, C_BACK_BTN_PR, LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(close_btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(close_btn, 0, 0);
+    lv_obj_set_style_shadow_width(close_btn, 0, 0);
+    lv_obj_set_style_pad_all(close_btn, 0, 0);
+    lv_obj_add_event_cb(close_btn, ui_event_camera_close_btn, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t *close_label = lv_label_create(close_btn);
+    lv_label_set_text(close_label, LV_SYMBOL_CLOSE);
+    lv_obj_set_style_text_font(close_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(close_label, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_center(close_label);
+}
+
+void ui_camera_viewer_close(void)
+{
+    if(g_camera_viewer && lv_obj_is_valid(g_camera_viewer))
+    {
+        lv_obj_del(g_camera_viewer);
+    }
+}
+
+void ui_camera_update_frame(const void *frame_data, size_t data_size)
+{
+    if(!g_camera_viewer || !lv_obj_is_valid(g_camera_viewer) ||
+       !g_camera_canvas || !lv_obj_is_valid(g_camera_canvas) ||
+       frame_data == NULL || data_size != sizeof(g_camera_canvas_buffer))
+    {
+        return;
+    }
+
+    memcpy(g_camera_canvas_buffer, frame_data, sizeof(g_camera_canvas_buffer));
+    lv_canvas_set_buffer(g_camera_canvas,
+                         g_camera_canvas_buffer,
+                         SCR_W,
+                         SCR_H,
+                         LV_IMG_CF_TRUE_COLOR);
+    lv_obj_set_style_bg_color(g_camera_viewer, lv_color_hex(0x000000), 0);
+    if(g_camera_error_label && lv_obj_is_valid(g_camera_error_label))
+    {
+        lv_obj_add_flag(g_camera_error_label, LV_OBJ_FLAG_HIDDEN);
+    }
+    lv_obj_invalidate(g_camera_canvas);
+}
+
+void ui_camera_request_frame_update(const void *frame_data, size_t data_size)
+{
+    if(frame_data == NULL || data_size != sizeof(g_camera_pending_frame))
+    {
+        return;
+    }
+
+    pthread_mutex_lock(&g_camera_ui_request_mutex);
+    memcpy(g_camera_pending_frame, frame_data, data_size);
+    g_camera_pending_frame_size = data_size;
+    g_camera_pending_frame_update = true;
+    pthread_mutex_unlock(&g_camera_ui_request_mutex);
+}
+
+void ui_camera_show_error(const char *message)
+{
+    ui_camera_viewer_show();
+
+    lv_canvas_fill_bg(g_camera_canvas, lv_color_hex(0xFFFFFF), LV_OPA_COVER);
+    lv_obj_set_style_bg_color(g_camera_viewer, lv_color_hex(0xFFFFFF), 0);
+    if(g_camera_error_label && lv_obj_is_valid(g_camera_error_label))
+    {
+        lv_label_set_text(g_camera_error_label,
+                          (message && message[0] != '\0') ? message : "Python script crashed");
+        lv_obj_set_style_text_color(g_camera_error_label, lv_color_hex(0x000000), 0);
+        lv_obj_clear_flag(g_camera_error_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_center(g_camera_error_label);
+    }
+
+    lv_obj_invalidate(g_camera_canvas);
+}
+
+void ui_camera_request_show_error(const char *message)
+{
+    pthread_mutex_lock(&g_camera_ui_request_mutex);
+    snprintf(g_camera_pending_error,
+             sizeof(g_camera_pending_error),
+             "%s",
+             message ? message : "Python script crashed");
+    g_camera_pending_error_update = true;
+    pthread_mutex_unlock(&g_camera_ui_request_mutex);
+}
+
+void ui_camera_request_viewer_close(void)
+{
+    pthread_mutex_lock(&g_camera_ui_request_mutex);
+    g_camera_pending_viewer_close = true;
+    pthread_mutex_unlock(&g_camera_ui_request_mutex);
 }
 
 /* ════════════════════════════════════════════════════════

@@ -25,6 +25,7 @@ include $(LVGL_DIR)/devices/threads/threads.mk
 include $(LVGL_DIR)/devices/data/data.mk
 include $(LVGL_DIR)/devices/power/power.mk
 include $(LVGL_DIR)/devices/wifi/wifi.mk
+include $(LVGL_DIR)/devices/camera/camera.mk
 
 #CSRCS +=$(LVGL_DIR)/mouse_cursor_icon.c 
 

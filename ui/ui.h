@@ -14,6 +14,19 @@ void ui_init(void);
 lv_obj_t *ui_camera_screen_create(void);
 lv_obj_t *ui_wifi_screen_create(void);
 
+void ui_camera_set_title(const char *text);
+void ui_camera_request_set_title(const char *text);
+void ui_camera_set_script_list(const char *options);
+void ui_camera_request_set_script_list(const char *options);
+const char *ui_camera_get_selected_script(void);
+void ui_camera_viewer_show(void);
+void ui_camera_viewer_close(void);
+void ui_camera_update_frame(const void *frame_data, size_t data_size);
+void ui_camera_request_frame_update(const void *frame_data, size_t data_size);
+void ui_camera_show_error(const char *message);
+void ui_camera_request_show_error(const char *message);
+void ui_camera_request_viewer_close(void);
+
 /* ── Main screen ── */
 /**
  * Create and load the main screen.
