@@ -143,7 +143,7 @@ void *camera_thread(void *arg)
 		}
 
 		camera_poll_script_process();
-		usleep(10000);
+		usleep(1000);
 	}
 
 	camera_stop_script_process();

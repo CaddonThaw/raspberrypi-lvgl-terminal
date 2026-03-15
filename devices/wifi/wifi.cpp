@@ -22,7 +22,6 @@ constexpr const char *WIFI_PORTAL_IFNAME = "wlan0";
 constexpr const char *WIFI_PORTAL_CONN_NAME = "PiTerminalHotspot";
 constexpr const char *WIFI_PORTAL_AP_SSID = "RaspberryPi-Terminal";
 constexpr const char *WIFI_PORTAL_AP_PASSWORD = "12345678";
-constexpr const char *WIFI_STATION_IP = "192.168.5.4";
 constexpr const char *WIFI_PORTAL_HOTSPOT_URL = "http://10.42.0.1:8080";
 
 bool g_wifi_portal_hotspot_active = false;
@@ -803,6 +802,8 @@ bool wifi_get_connected_ssid(char *buffer, size_t buffer_size)
 void wifi_build_status_text(char *buffer, size_t buffer_size)
 {
     char connected_ssid[128];
+    const size_t prefix_length = strlen("Connected ");
+    size_t available_ssid_length;
 
     if(buffer == NULL || buffer_size == 0)
     {
@@ -811,14 +812,25 @@ void wifi_build_status_text(char *buffer, size_t buffer_size)
 
     if(wifi_get_connected_ssid(connected_ssid, sizeof(connected_ssid)))
     {
-        snprintf(buffer, buffer_size, "Connected %s", connected_ssid);
+        if(buffer_size <= prefix_length + 1)
+        {
+            snprintf(buffer, buffer_size, "Connected");
+            return;
+        }
+
+        available_ssid_length = buffer_size - prefix_length - 1;
+        snprintf(buffer,
+                 buffer_size,
+                 "Connected %.*s",
+                 (int)available_ssid_length,
+                 connected_ssid);
         return;
     }
 
     snprintf(buffer, buffer_size, "DisConnected");
 }
 
-void wifi_build_phone_entry_url(const char *ssid, char *buffer, size_t buffer_size)
+bool wifi_build_phone_entry_url(const char *ssid, char *buffer, size_t buffer_size)
 {
     char encoded_ssid[256];
     char ip_address[64];
@@ -826,13 +838,14 @@ void wifi_build_phone_entry_url(const char *ssid, char *buffer, size_t buffer_si
 
     if(buffer_size == 0)
     {
-        return;
+        return false;
     }
 
+    buffer[0] = '\0';
     url_encode(ssid ? ssid : "", encoded_ssid, sizeof(encoded_ssid));
     if(!wifi_get_interface_ip(WIFI_PORTAL_IFNAME, ip_address, sizeof(ip_address)) || ip_address[0] == '\0')
     {
-        snprintf(ip_address, sizeof(ip_address), "%s", WIFI_STATION_IP);
+        return false;
     }
 
     portal_url = std::string("http://") + ip_address + ":" + std::to_string(WIFI_PORTAL_PORT) + "/?ssid=" + encoded_ssid;
@@ -841,6 +854,8 @@ void wifi_build_phone_entry_url(const char *ssid, char *buffer, size_t buffer_si
              buffer_size,
              "%s",
              portal_url.c_str());
+
+    return true;
 }
 
 bool wifi_is_station_connected(void)
@@ -862,7 +877,6 @@ int wifi_prepare_phone_portal(const char *ssid,
                               size_t portal_hint_size)
 {
     char portal_url[256];
-    char current_ip[64];
 
     if(qr_payload_size > 0)
     {
@@ -879,19 +893,19 @@ int wifi_prepare_phone_portal(const char *ssid,
 
     if(wifi_is_station_connected())
     {
-        wifi_build_phone_entry_url(ssid, portal_url, sizeof(portal_url));
-        if(!wifi_get_interface_ip(WIFI_PORTAL_IFNAME, current_ip, sizeof(current_ip)) || current_ip[0] == '\0')
+        if(wifi_build_phone_entry_url(ssid, portal_url, sizeof(portal_url)))
         {
-            snprintf(current_ip, sizeof(current_ip), "%s", WIFI_STATION_IP);
+            snprintf(qr_payload, qr_payload_size, "%s", portal_url);
+            snprintf(portal_hint,
+                     portal_hint_size,
+                     "Connect phone to %s and open %s",
+                     ssid,
+                     portal_url);
+            printf("[wifi] using station portal: %s\n", portal_url);
+            return 1;
         }
-        snprintf(qr_payload, qr_payload_size, "%s", portal_url);
-        snprintf(portal_hint,
-                 portal_hint_size,
-                 "Connect phone to %s and open %s",
-                 ssid,
-                 portal_url);
-        printf("[wifi] using station portal: %s\n", portal_url);
-        return 1;
+
+        printf("[wifi] station network detected but failed to resolve current IP, falling back to hotspot portal\n");
     }
 
     printf("[wifi] station network unavailable, trying hotspot portal\n");
