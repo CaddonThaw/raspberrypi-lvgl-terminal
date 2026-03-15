@@ -89,14 +89,17 @@ static lv_obj_t *g_lbl_ip;
 static lv_obj_t *g_power_mask;
 static lv_obj_t *g_power_dialog;
 static lv_obj_t *g_wifi_roller;
+static lv_obj_t *g_wifi_title;
 static lv_obj_t *g_wifi_mask;
 static lv_obj_t *g_wifi_qr_dialog;
 static lv_obj_t *g_wifi_qr_ssid_label;
 static lv_obj_t *g_wifi_qr_obj;
+static lv_obj_t *g_wifi_qr_hint_label;
 static lv_obj_t *g_wifi_loading_mask;
 static lv_obj_t *g_wifi_loading_dialog;
 static char g_wifi_selected_ssid[64];
 static char g_wifi_submitted_password[64];
+static char g_wifi_portal_hint[160];
 static char g_wifi_roller_options[512] = "option1\noption2\noption3";
 
 /* ═══════════════════════════════════════
@@ -114,6 +117,7 @@ static char g_wifi_roller_options[512] = "option1\noption2\noption3";
  *  Wi-Fi UI constants
  * ═══════════════════════════════════════ */
 #define WIFI_TITLE_Y         6
+#define WIFI_TITLE_W       115
 #define WIFI_ROLLER_X       10
 #define WIFI_ROLLER_Y       25
 #define WIFI_ROLLER_W      140
@@ -123,8 +127,8 @@ static char g_wifi_roller_options[512] = "option1\noption2\noption3";
 #define WIFI_BTN_Y          95
 
 #define WIFI_QR_DLG_W      148
-#define WIFI_QR_DLG_H      120
-#define WIFI_QR_SIZE        60
+#define WIFI_QR_DLG_H      124
+#define WIFI_QR_SIZE        52
 #define WIFI_QR_BTN_W       80
 #define WIFI_QR_BTN_H       18
 
@@ -138,6 +142,7 @@ static void wifi_modal_delete_cb(lv_event_t *e)
     g_wifi_qr_dialog = NULL;
     g_wifi_qr_ssid_label = NULL;
     g_wifi_qr_obj = NULL;
+    g_wifi_qr_hint_label = NULL;
 }
 
 static void wifi_loading_delete_cb(lv_event_t *e)
@@ -234,10 +239,11 @@ static void wifi_apply_roller_options(void)
 
 static void wifi_build_qr_payload(char *buffer, size_t buffer_size)
 {
-    snprintf(buffer,
-             buffer_size,
-             "WIFI-SETUP:SSID=%s",
-             g_wifi_selected_ssid[0] != '\0' ? g_wifi_selected_ssid : "option1");
+    wifi_prepare_phone_portal(g_wifi_selected_ssid[0] != '\0' ? g_wifi_selected_ssid : "option1",
+                              buffer,
+                              buffer_size,
+                              g_wifi_portal_hint,
+                              sizeof(g_wifi_portal_hint));
 }
 
 /* ════════════════════════════════════════════════════════
@@ -291,17 +297,22 @@ lv_obj_t *ui_camera_screen_create(void)
 lv_obj_t *ui_wifi_screen_create(void)
 {
     lv_obj_t *scr = lv_obj_create(NULL);
+    char wifi_title_text[128];
     lv_obj_set_style_bg_color(scr, C_BG, 0);
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
     lv_obj_clear_flag(scr, LV_OBJ_FLAG_SCROLLABLE);
 
     build_back_button(scr);
 
-    lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, "Wi-Fi");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(title, C_ACCENT, 0);
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, WIFI_TITLE_Y);
+    g_wifi_title = lv_label_create(scr);
+    wifi_build_status_text(wifi_title_text, sizeof(wifi_title_text));
+    lv_label_set_text(g_wifi_title, wifi_title_text);
+    lv_obj_set_width(g_wifi_title, WIFI_TITLE_W);
+    lv_label_set_long_mode(g_wifi_title, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_font(g_wifi_title, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(g_wifi_title, C_ACCENT, 0);
+    lv_obj_set_style_text_align(g_wifi_title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(g_wifi_title, LV_ALIGN_TOP_MID, 8, WIFI_TITLE_Y + 1);
 
     g_wifi_roller = lv_roller_create(scr);
     lv_obj_set_size(g_wifi_roller, WIFI_ROLLER_W, WIFI_ROLLER_H);
@@ -337,6 +348,16 @@ lv_obj_t *ui_wifi_screen_create(void)
     return scr;
 }
 
+void ui_wifi_set_title(const char *text)
+{
+    if(!g_wifi_title || !lv_obj_is_valid(g_wifi_title))
+    {
+        return;
+    }
+
+    lv_label_set_text(g_wifi_title, (text && text[0] != '\0') ? text : "Disconnecting");
+}
+
 void ui_wifi_set_scan_results(const char *options)
 {
     if(options && options[0] != '\0')
@@ -366,6 +387,7 @@ void ui_wifi_qr_dialog_show(void)
     wifi_get_selected_ssid(selected_ssid, sizeof(selected_ssid));
     snprintf(g_wifi_selected_ssid, sizeof(g_wifi_selected_ssid), "%s", selected_ssid);
     wifi_build_qr_payload(qr_payload, sizeof(qr_payload));
+    printf("[wifi] qr payload: %s\n", qr_payload);
 
     g_wifi_mask = lv_obj_create(scr);
     lv_obj_set_size(g_wifi_mask, SCR_W, SCR_H);
@@ -405,19 +427,29 @@ void ui_wifi_qr_dialog_show(void)
     lv_obj_set_style_text_font(g_wifi_qr_ssid_label, &ui_font_AlimamaShuHeiTi, 0);
     lv_obj_set_style_text_color(g_wifi_qr_ssid_label, C_TEXT, 0);
     lv_obj_set_style_text_align(g_wifi_qr_ssid_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(g_wifi_qr_ssid_label, LV_ALIGN_TOP_MID, 0, 20);
+    lv_obj_align(g_wifi_qr_ssid_label, LV_ALIGN_TOP_MID, 0, 18);
 
     g_wifi_qr_obj = lv_qrcode_create(g_wifi_qr_dialog,
                                      WIFI_QR_SIZE,
                                      lv_color_hex(0x1A1A1A),
                                      lv_color_hex(0xFFFFFF));
     lv_qrcode_update(g_wifi_qr_obj, qr_payload, strlen(qr_payload));
-    lv_obj_align(g_wifi_qr_obj, LV_ALIGN_TOP_MID, 0, 36);
+    lv_obj_align(g_wifi_qr_obj, LV_ALIGN_TOP_MID, 0, 32);
+
+    g_wifi_qr_hint_label = lv_label_create(g_wifi_qr_dialog);
+    lv_label_set_text(g_wifi_qr_hint_label,
+                      g_wifi_portal_hint[0] != '\0' ? g_wifi_portal_hint : "Open phone portal");
+    lv_obj_set_width(g_wifi_qr_hint_label, WIFI_QR_DLG_W - 10);
+    lv_label_set_long_mode(g_wifi_qr_hint_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_font(g_wifi_qr_hint_label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(g_wifi_qr_hint_label, C_TEXT, 0);
+    lv_obj_set_style_text_align(g_wifi_qr_hint_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(g_wifi_qr_hint_label, LV_ALIGN_TOP_MID, 0, 86);
 
     build_modal_action_btn(g_wifi_qr_dialog,
                            "Cancel",
                            (WIFI_QR_DLG_W - WIFI_QR_BTN_W) / 2,
-                           99,
+                           104,
                            WIFI_QR_BTN_W,
                            WIFI_QR_BTN_H,
                            ui_event_wifi_qr_cancel_btn);

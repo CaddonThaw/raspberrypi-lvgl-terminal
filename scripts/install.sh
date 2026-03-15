@@ -30,7 +30,7 @@ User=$USER
 WorkingDirectory=$(pwd)
 ExecStart=$(pwd)/demo
 Restart=always
-RestartSec=5
+RestartSec=0.1
 StandardOutput=journal
 StandardError=journal
 
