@@ -113,8 +113,17 @@ static char g_wifi_selected_ssid[64];
 static char g_wifi_submitted_password[64];
 static char g_wifi_portal_hint[160];
 static char g_wifi_roller_options[512] = "option1\noption2\noption3";
+static pthread_mutex_t g_main_ui_request_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_camera_ui_request_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_wifi_ui_request_mutex = PTHREAD_MUTEX_INITIALIZER;
+static bool g_main_pending_time_update = false;
+static bool g_main_pending_cpu_update = false;
+static bool g_main_pending_battery_update = false;
+static bool g_main_pending_ip_update = false;
+static char g_main_pending_time[100];
+static char g_main_pending_cpu[32];
+static char g_main_pending_battery[32];
+static char g_main_pending_ip[64];
 static bool g_camera_pending_title_update = false;
 static bool g_camera_pending_script_list_update = false;
 static bool g_camera_pending_frame_update = false;
@@ -317,6 +326,10 @@ static void wifi_apply_roller_options(void)
 
 static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
 {
+    bool has_main_time_update;
+    bool has_main_cpu_update;
+    bool has_main_battery_update;
+    bool has_main_ip_update;
     bool has_camera_title_update;
     bool has_camera_script_list_update;
     bool has_camera_frame_update;
@@ -328,6 +341,10 @@ static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
     bool has_scan_results_update;
     bool has_submit_password;
     static lv_color_t camera_frame_copy[SCR_W * SCR_H];
+    char main_time[100];
+    char main_cpu[32];
+    char main_battery[32];
+    char main_ip[64];
     char camera_title[256];
     char camera_script_list[512];
     char camera_error[512];
@@ -345,10 +362,45 @@ static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
     title[0] = '\0';
     scan_results[0] = '\0';
     password[0] = '\0';
+    main_time[0] = '\0';
+    main_cpu[0] = '\0';
+    main_battery[0] = '\0';
+    main_ip[0] = '\0';
     camera_title[0] = '\0';
     camera_script_list[0] = '\0';
     camera_error[0] = '\0';
     camera_frame_size = 0;
+
+    pthread_mutex_lock(&g_main_ui_request_mutex);
+    has_main_time_update = g_main_pending_time_update;
+    has_main_cpu_update = g_main_pending_cpu_update;
+    has_main_battery_update = g_main_pending_battery_update;
+    has_main_ip_update = g_main_pending_ip_update;
+
+    if(has_main_time_update)
+    {
+        snprintf(main_time, sizeof(main_time), "%s", g_main_pending_time);
+        g_main_pending_time_update = false;
+    }
+
+    if(has_main_cpu_update)
+    {
+        snprintf(main_cpu, sizeof(main_cpu), "%s", g_main_pending_cpu);
+        g_main_pending_cpu_update = false;
+    }
+
+    if(has_main_battery_update)
+    {
+        snprintf(main_battery, sizeof(main_battery), "%s", g_main_pending_battery);
+        g_main_pending_battery_update = false;
+    }
+
+    if(has_main_ip_update)
+    {
+        snprintf(main_ip, sizeof(main_ip), "%s", g_main_pending_ip);
+        g_main_pending_ip_update = false;
+    }
+    pthread_mutex_unlock(&g_main_ui_request_mutex);
 
     pthread_mutex_lock(&g_camera_ui_request_mutex);
     has_camera_title_update = g_camera_pending_title_update;
@@ -426,6 +478,26 @@ static void wifi_ui_dispatch_timer_cb(lv_timer_t *timer)
         g_wifi_pending_submit_password = false;
     }
     pthread_mutex_unlock(&g_wifi_ui_request_mutex);
+
+    if(has_main_time_update)
+    {
+        ui_main_set_time(main_time);
+    }
+
+    if(has_main_cpu_update)
+    {
+        ui_main_set_cpu(main_cpu);
+    }
+
+    if(has_main_battery_update)
+    {
+        ui_main_set_battery(main_battery);
+    }
+
+    if(has_main_ip_update)
+    {
+        ui_main_set_ip(main_ip);
+    }
 
     if(has_title_update)
     {
@@ -608,10 +680,7 @@ void ui_camera_request_set_script_list(const char *options)
 
 const char *ui_camera_get_selected_script(void)
 {
-    if(g_camera_selected_script[0] == '\0')
-    {
-        camera_get_selected_script(g_camera_selected_script, sizeof(g_camera_selected_script));
-    }
+    camera_get_selected_script(g_camera_selected_script, sizeof(g_camera_selected_script));
 
     return g_camera_selected_script;
 }
@@ -1370,7 +1439,66 @@ void ui_init(void)
 /* ════════════════════════════════════════════════════════
  *  Runtime update API
  * ════════════════════════════════════════════════════════ */
-void ui_main_set_time(const char *t)    { lv_label_set_text(g_lbl_time, t); }
-void ui_main_set_cpu(const char *v)     { lv_label_set_text(g_lbl_cpu,  v); }
-void ui_main_set_battery(const char *v) { lv_label_set_text(g_lbl_bat,  v); }
-void ui_main_set_ip(const char *v)      { lv_label_set_text(g_lbl_ip,   v); }
+void ui_main_set_time(const char *t)
+{
+    if(g_lbl_time && lv_obj_is_valid(g_lbl_time))
+    {
+        lv_label_set_text(g_lbl_time, t ? t : "-");
+    }
+}
+
+void ui_main_set_cpu(const char *v)
+{
+    if(g_lbl_cpu && lv_obj_is_valid(g_lbl_cpu))
+    {
+        lv_label_set_text(g_lbl_cpu, v ? v : "none");
+    }
+}
+
+void ui_main_set_battery(const char *v)
+{
+    if(g_lbl_bat && lv_obj_is_valid(g_lbl_bat))
+    {
+        lv_label_set_text(g_lbl_bat, v ? v : "none");
+    }
+}
+
+void ui_main_set_ip(const char *v)
+{
+    if(g_lbl_ip && lv_obj_is_valid(g_lbl_ip))
+    {
+        lv_label_set_text(g_lbl_ip, v ? v : "none");
+    }
+}
+
+void ui_main_request_set_time(const char *t)
+{
+    pthread_mutex_lock(&g_main_ui_request_mutex);
+    snprintf(g_main_pending_time, sizeof(g_main_pending_time), "%s", t ? t : "-");
+    g_main_pending_time_update = true;
+    pthread_mutex_unlock(&g_main_ui_request_mutex);
+}
+
+void ui_main_request_set_cpu(const char *v)
+{
+    pthread_mutex_lock(&g_main_ui_request_mutex);
+    snprintf(g_main_pending_cpu, sizeof(g_main_pending_cpu), "%s", v ? v : "none");
+    g_main_pending_cpu_update = true;
+    pthread_mutex_unlock(&g_main_ui_request_mutex);
+}
+
+void ui_main_request_set_battery(const char *v)
+{
+    pthread_mutex_lock(&g_main_ui_request_mutex);
+    snprintf(g_main_pending_battery, sizeof(g_main_pending_battery), "%s", v ? v : "none");
+    g_main_pending_battery_update = true;
+    pthread_mutex_unlock(&g_main_ui_request_mutex);
+}
+
+void ui_main_request_set_ip(const char *v)
+{
+    pthread_mutex_lock(&g_main_ui_request_mutex);
+    snprintf(g_main_pending_ip, sizeof(g_main_pending_ip), "%s", v ? v : "none");
+    g_main_pending_ip_update = true;
+    pthread_mutex_unlock(&g_main_ui_request_mutex);
+}

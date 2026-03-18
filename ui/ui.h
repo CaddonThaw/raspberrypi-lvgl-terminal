@@ -61,6 +61,10 @@ void ui_main_set_time(const char *t);      /* e.g. "23:28"           */
 void ui_main_set_cpu(const char *v);       /* e.g. "42\xc2\xb0""C"  */
 void ui_main_set_battery(const char *v);   /* e.g. "1800mA"          */
 void ui_main_set_ip(const char *v);        /* e.g. "192.168.255.255" */
+void ui_main_request_set_time(const char *t);
+void ui_main_request_set_cpu(const char *v);
+void ui_main_request_set_battery(const char *v);
+void ui_main_request_set_ip(const char *v);
 
 #ifdef __cplusplus
 }

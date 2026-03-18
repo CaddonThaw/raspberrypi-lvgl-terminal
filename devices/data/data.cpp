@@ -153,8 +153,8 @@ void data_loop(void)
 
     get_battery_voltage(battery_string, sizeof(battery_string));
 
-    ui_main_set_time(time_string);
-    ui_main_set_cpu(cpu_temp_string);
-    ui_main_set_battery(battery_string);
-    ui_main_set_ip(ip_string);
+    ui_main_request_set_time(time_string);
+    ui_main_request_set_cpu(cpu_temp_string);
+    ui_main_request_set_battery(battery_string);
+    ui_main_request_set_ip(ip_string);
 }
