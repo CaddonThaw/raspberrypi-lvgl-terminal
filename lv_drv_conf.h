@@ -32,6 +32,16 @@
 #define MISO_PIN        19          // Physical Pin 35
 #define CS_PIN          16          // Physical Pin 36
 #define IRQ_PIN         26          // Physical Pin 37
+/* Fan Pin (BCM) */
+#define FAN_PIN         4           // Physical Pin 7
+/* LED Pin (BCM) */
+#define LED1_PIN        22          // Physical Pin 15
+#define LED2_PIN        27          // Physical Pin 13
+/* Buzzer Pin (BCM) */
+#define BUZZER_PIN      17          // Physical Pin 11
+/* Battery I2C (BCM) */
+#define BATTERY_I2C_ADDR 0x42       // INA219 address
+#define BATTERY_I2C_DEV  "/dev/i2c-1"
 
 /*********************
  * DELAY INTERFACE
